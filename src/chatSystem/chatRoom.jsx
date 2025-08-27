@@ -88,6 +88,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }, [messages.length, chatId, currentUser])
 
+  // Load chat info
   useEffect(() => {
     const loadChatInfo = async () => {
       try {
@@ -118,17 +119,47 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
 
     loadChatInfo()
+  }, [chatId])
 
-    const q = query(collection(db, "chats", chatId, "messages"), orderBy("timestamp"))
+  // Load messages in real-time
+  useEffect(() => {
+    if (!chatId) return
 
+    const messagesRef = collection(db, "chats", chatId, "messages")
+    const q = query(messagesRef, orderBy("timestamp", "asc"))
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const msgs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      setMessages(msgs)
-      setTimeout(scrollToBottom, 100)
+      const messageList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setMessages(messageList)
+      setLoading(false)
+      
+      // Scroll to bottom after messages load
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
+    }, (error) => {
+      console.error("Error loading messages:", error)
+      setLoading(false)
     })
 
     return () => unsubscribe()
   }, [chatId])
+
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
+    }
+  }, [messages.length])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -184,19 +215,31 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     setImages(newImages)
   }
 
-  const sendMessage = async (e) => {
-    e.preventDefault()
-    if ((input.trim() === "" && images.length === 0) || !currentUser) return
+  const sendMessage = async () => {
+    console.log("sendMessage called with:", { input: input.trim(), images: images.length, currentUser: currentUser?.uid, chatId })
+    
+    if ((input.trim() === "" && images.length === 0) || !currentUser) {
+      console.log("sendMessage validation failed:", { 
+        inputEmpty: input.trim() === "", 
+        noImages: images.length === 0, 
+        noUser: !currentUser 
+      })
+      return
+    }
 
     try {
       const message = {
         senderId: currentUser.uid,
-        text: input.trim(),
+        content: input.trim(), // Changed from 'text' to 'content' to match display logic
         timestamp: serverTimestamp(),
+        type: images.length > 0 ? "image" : "text", // Add type field for proper display
         images: images,
       }
 
-      await addDoc(collection(db, "chats", chatId, "messages"), message)
+      console.log("Attempting to send message:", message)
+      
+      const docRef = await addDoc(collection(db, "chats", chatId, "messages"), message)
+      console.log("Message sent successfully with ID:", docRef.id)
 
       // Update last message text based on content
       let lastMessageText = input.trim()
@@ -212,11 +255,24 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
       // Key fix: Include sender ID in chat update
       await updateLastMessage(chatId, lastMessageText, lastMessageType, currentUser.uid)
+      console.log("Last message updated successfully")
 
       setInput("")
       setImages([])
     } catch (error) {
       console.error("Error sending message:", error)
+    }
+  }
+
+  // Add missing functions
+  const handleSendMessage = () => {
+    sendMessage()
+  }
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage()
     }
   }
 
@@ -443,8 +499,8 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-center">
             <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-4">
-              <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s9-3.582 9-8-4.03-8-9-8-9 3.582-9 8 4.03 8 9 8z" />
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Start the conversation</h3>

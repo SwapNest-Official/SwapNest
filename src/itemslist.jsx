@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, onSnapshot } from "firebase/firestore"
-import { db } from "../src/firebase/config"
+import { db } from "./firebase/config"
 import { getAuth, onAuthStateChanged } from "firebase/auth"
-import { Search, Sliders, Heart, ShoppingCart, Clock, Gift } from "lucide-react"
+import { Search, Sliders, Heart, ShoppingCart, Clock, Gift, MessageCircle } from "lucide-react"
 import Navbar from "./navbar"
 import { useParams, useNavigate } from "react-router-dom"
 import { Eye } from "lucide-react"
@@ -22,6 +22,8 @@ export default function ProductListPage() {
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState(null)
   const [favorites, setFavorites] = useState(new Set()) // Set of favorite product IDs
+  const [isVisible, setIsVisible] = useState(false) // For lazy loading animations
+  const [loadedProducts, setLoadedProducts] = useState([]) // For staggered product animations
   const { isDarkMode } = useTheme()
 
   const { categoryRoute } = useParams()
@@ -40,6 +42,23 @@ export default function ProductListPage() {
 
     return () => unsubscribe()
   }, [])
+
+  // Lazy loading effect for staggered animations
+  useEffect(() => {
+    setIsVisible(true)
+    
+    // Staggered loading of products
+    const timer = setTimeout(() => {
+      const productCount = products.length
+      for (let i = 0; i < productCount; i++) {
+        setTimeout(() => {
+          setLoadedProducts(prev => [...prev, i])
+        }, i * 150) // 150ms delay between each product
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [products.length])
 
   // Load user's favorites
   const loadFavorites = (uid) => {
@@ -167,6 +186,73 @@ export default function ProductListPage() {
     fetchProducts()
   }, [])
 
+  // Add chat functionality
+  const handleChatClick = async (e, product) => {
+    e.stopPropagation()
+    
+    if (!currentUser) {
+      navigate("/login")
+      return
+    }
+
+    // Check if user is trying to chat with their own product
+    if (currentUser.uid === product.userId) {
+      alert("You cannot chat with yourself about your own product!")
+      return
+    }
+
+    try {
+      // Create chat document
+      const newChatId = `${product.id}_${currentUser.uid}`
+      const chatRef = doc(db, "chats", newChatId)
+      const chatDoc = await getDoc(chatRef)
+      
+      if (!chatDoc.exists()) {
+        // Get buyer and seller data
+        const buyerRef = doc(db, "users", currentUser.uid)
+        const sellerRef = doc(db, "users", product.userId)
+        
+        const [buyerDoc, sellerDoc] = await Promise.all([
+          getDoc(buyerRef),
+          getDoc(sellerRef)
+        ])
+        
+        const buyerData = buyerDoc.exists() ? buyerDoc.data() : { fullName: "Unknown User" }
+        const sellerData = sellerDoc.exists() ? sellerDoc.data() : { fullName: "Unknown User" }
+        
+        console.log("Creating chat with:", {
+          buyerName: buyerData.fullName || currentUser.displayName || "Unknown User",
+          sellerName: sellerData.fullName || "Unknown User"
+        })
+        
+        await setDoc(chatRef, {
+          chatId: newChatId,
+          productId: product.id,
+          productTitle: product.title,
+          buyerId: currentUser.uid,
+          sellerId: product.userId,
+          buyerName: buyerData.fullName || currentUser.displayName || "Unknown User",
+          sellerName: sellerData.fullName || "Unknown User",
+          lastMessage: "",
+          lastUpdated: new Date().toISOString(),
+          productImage: product.images?.[0] || "",
+          productPrice: product.price || 0,
+          productCategory: product.category || "General"
+        })
+        
+        console.log("Chat created successfully with ID:", newChatId)
+      } else {
+        console.log("Chat already exists:", newChatId)
+      }
+
+      // Navigate to chat interface
+      navigate(`/chating?chatId=${newChatId}`)
+    } catch (error) {
+      console.error("Error creating chat:", error)
+      alert("Failed to start chat. Please try again.")
+    }
+  }
+
   // Get unique categories for filter
   const categories = ["All", ...new Set(products.map((product) => product.category))]
 
@@ -191,7 +277,7 @@ export default function ProductListPage() {
       <Navbar />
       <main className="w-full max-w-7xl mx-auto px-3 py-4 sm:px-4 sm:py-6 lg:px-6">
         {/* Header Section */}
-        <div className="mb-8 sm:mb-12">
+        <div className={`mb-8 sm:mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-center mb-4 sm:mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
             {categoryFilter === "All" ? "Discover Amazing Items" : `${categoryFilter} Items`}
           </h1>
@@ -201,21 +287,21 @@ export default function ProductListPage() {
         </div>
 
         {/* Search and Filter Section */}
-        <div className="mb-8 sm:mb-12 space-y-4 sm:space-y-6">
+        <div className={`mb-8 sm:mb-12 space-y-4 sm:space-y-6 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           {/* Search Bar */}
-          <div className="relative max-w-2xl mx-auto">
+          <div className={`relative max-w-2xl mx-auto transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search for items..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 sm:py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 shadow-lg"
+              className="w-full pl-12 pr-4 py-3 sm:py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl sm:rounded-2xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
             />
           </div>
 
           {/* Category Filter */}
-          <div className="flex justify-center">
+          <div className={`flex justify-center transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <div className="relative">
               <Sliders className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <select
@@ -235,7 +321,7 @@ export default function ProductListPage() {
 
         {/* Empty State */}
         {filteredProducts.length === 0 && !loading && (
-          <div className="text-center py-16 sm:py-24">
+          <div className={`text-center py-16 sm:py-24 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <div className="bg-white dark:bg-gray-800 rounded-3xl p-8 sm:p-12 border border-gray-100 dark:border-gray-700 shadow-xl max-w-md mx-auto">
               <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Search className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
@@ -264,11 +350,16 @@ export default function ProductListPage() {
 
         {/* Product Grid */}
         {filteredProducts.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {filteredProducts.map((product) => (
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            {filteredProducts.map((product, index) => (
               <div
                 key={product.id}
-                className="group cursor-pointer h-full"
+                className={`group cursor-pointer h-full transition-all duration-700 transform ${
+                  loadedProducts.includes(index) 
+                    ? 'opacity-100 translate-y-0' 
+                    : 'opacity-0 translate-y-10'
+                }`}
+                style={{ transitionDelay: `${index * 150}ms` }}
                 onClick={() => setSelectedProductId(product.id)}
               >
                 <div className={`bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 h-full flex flex-col ${
@@ -388,14 +479,37 @@ export default function ProductListPage() {
                       
                       <button
                         className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 dark:bg-gray-700 rounded-xl sm:rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex-shrink-0"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Add chat functionality here
-                        }}
+                        onClick={(e) => handleChatClick(e, product)}
                         title="Chat with seller"
                       >
-                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" />
+                      </button>
+
+                      <button
+                        className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 dark:bg-gray-700 rounded-xl sm:rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex-shrink-0"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const shareUrl = `${window.location.origin}/itemlist/product/${product.id}`
+                          
+                          // Simple copy to clipboard
+                          navigator.clipboard.writeText(shareUrl).then(() => {
+                            // Show visual feedback
+                            const originalContent = e.currentTarget.innerHTML
+                            e.currentTarget.innerHTML = '<svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+                            e.currentTarget.classList.add('bg-green-100', 'dark:bg-green-900/20')
+                            
+                            setTimeout(() => {
+                              e.currentTarget.innerHTML = originalContent
+                              e.currentTarget.classList.remove('bg-green-100', 'dark:bg-green-900/20')
+                            }, 2000)
+                          }).catch(() => {
+                            alert("Product link: " + shareUrl)
+                          })
+                        }}
+                        title="Copy product link"
+                      >
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                         </svg>
                       </button>
                     </div>

@@ -7,6 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Navbar from '../navbar';
 import { useTheme } from '../contexts/ThemeContext';
+import { getAuth, onAuthStateChanged } from "firebase/auth"
+import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore"
+
+const auth = getAuth()
+const db = getFirestore()
 
 const CategoryPage = () => {
   const { categoryName } = useParams();
@@ -24,6 +29,7 @@ const CategoryPage = () => {
     priceRange: '',
     location: ''
   });
+  const [currentUser, setCurrentUser] = useState(null)
 
   useEffect(() => {
     setIsVisible(true);
@@ -87,12 +93,90 @@ const CategoryPage = () => {
     }, 1000);
   }, [categoryName]);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleProductClick = (productId) => {
     navigate(`/itemlist/product/${productId}`);
   };
 
-  const handleChatClick = (productId, sellerName) => {
-    navigate(`/chating?productId=${productId}&seller=${sellerName}`);
+  const handleChatClick = async (productId, sellerName) => {
+    if (!currentUser) {
+      navigate("/login")
+      return
+    }
+
+    try {
+      // Get product details to create chat
+      const productRef = doc(db, "items", productId)
+      const productDoc = await getDoc(productRef)
+      
+      if (!productDoc.exists()) {
+        alert("Product not found!")
+        return
+      }
+
+      const product = productDoc.data()
+
+      // Check if user is trying to chat with their own product
+      if (currentUser.uid === product.userId) {
+        alert("You cannot chat with yourself about your own product!")
+        return
+      }
+
+      // Create chat document
+      const newChatId = `${productId}_${currentUser.uid}`
+      const chatRef = doc(db, "chats", newChatId)
+      const chatDoc = await getDoc(chatRef)
+      
+      if (!chatDoc.exists()) {
+        // Get buyer and seller data
+        const buyerRef = doc(db, "users", currentUser.uid)
+        const sellerRef = doc(db, "users", product.userId)
+        
+        const [buyerDoc, sellerDoc] = await Promise.all([
+          getDoc(buyerRef),
+          getDoc(sellerRef)
+        ])
+        
+        const buyerData = buyerDoc.exists() ? buyerDoc.data() : { fullName: "Unknown User" }
+        const sellerData = sellerDoc.exists() ? sellerDoc.data() : { fullName: "Unknown User" }
+        
+        console.log("CategoryPage: Creating chat with:", {
+          buyerName: buyerData.fullName || currentUser.displayName || "Unknown User",
+          sellerName: sellerData.fullName || "Unknown User"
+        })
+        
+        await setDoc(chatRef, {
+          chatId: newChatId,
+          productId: productId,
+          productTitle: product.title || product.name,
+          buyerId: currentUser.uid,
+          sellerId: product.userId,
+          buyerName: buyerData.fullName || currentUser.displayName || "Unknown User",
+          sellerName: sellerData.fullName || sellerName || "Unknown User",
+          lastMessage: "",
+          lastUpdated: new Date().toISOString(),
+          productImage: product.images?.[0] || "",
+          productPrice: product.price || 0,
+          productCategory: product.category || "General"
+        })
+        
+        console.log("CategoryPage: Chat created successfully with ID:", newChatId)
+      } else {
+        console.log("CategoryPage: Chat already exists:", newChatId)
+      }
+
+      // Navigate to chat interface
+      navigate(`/chating?chatId=${newChatId}`)
+    } catch (error) {
+      console.error("Error creating chat:", error)
+      alert("Failed to start chat. Please try again.")
+    }
   };
 
   const sortProducts = (products, sortBy) => {
@@ -337,6 +421,35 @@ const CategoryPage = () => {
                           className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
                         >
                           <MessageCircle className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const shareUrl = `${window.location.origin}/itemlist/product/${product.id}`;
+                            
+                            // Simple copy to clipboard
+                            navigator.clipboard.writeText(shareUrl).then(() => {
+                              // Show visual feedback
+                              const originalContent = e.currentTarget.innerHTML
+                              e.currentTarget.innerHTML = '<svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!'
+                              e.currentTarget.classList.add('bg-green-100', 'dark:bg-green-900/20', 'text-green-700', 'dark:text-green-300')
+                              
+                              setTimeout(() => {
+                                e.currentTarget.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" /></svg>'
+                                e.currentTarget.classList.remove('bg-green-100', 'dark:bg-green-900/20', 'text-green-700', 'dark:text-green-300')
+                              }, 2000)
+                            }).catch(() => {
+                              alert("Product link: " + shareUrl)
+                            });
+                          }}
+                          className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                          title="Copy product link"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                          </svg>
                         </Button>
                       </div>
                     </div>

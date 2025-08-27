@@ -21,7 +21,7 @@ import {
   Calendar,
   Camera,
 } from "lucide-react"
-import ShareButton from "./ProductDetails/sharebutton"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -686,11 +686,32 @@ export default function ProfilePage({ MyProfile }) {
                       <Heart className={`h-3 w-3 sm:h-4 sm:w-4 mr-1 ${isFollowing ? "fill-white" : ""}`} />
                       {isFollowing ? "Unfollow" : "Follow"}
                     </Button>
-                    <Button variant="outline" className="text-xs sm:text-sm py-2 h-auto border-gray-300 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
-                      <ShareButton 
-                        profileName={profile?.fullName}
-                        profileUrl={window.location.href}
-                      />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs sm:text-sm py-2 h-auto border-gray-300 dark:border-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      onClick={(event) => {
+                        const profileUrl = window.location.href
+                        navigator.clipboard.writeText(profileUrl).then(() => {
+                          // Show visual feedback
+                          const originalContent = event.currentTarget.innerHTML
+                          event.currentTarget.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!'
+                          event.currentTarget.classList.add('bg-green-100', 'dark:bg-green-900/20', 'text-green-700', 'dark:text-green-300')
+                          
+                          setTimeout(() => {
+                            event.currentTarget.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" /></svg> Share Profile'
+                            event.currentTarget.classList.remove('bg-green-100', 'dark:bg-green-900/20', 'text-green-700', 'dark:text-green-300')
+                          }, 2000)
+                        }).catch(() => {
+                          alert("Profile link: " + profileUrl)
+                        })
+                      }}
+                      title="Copy profile link"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                      </svg>
+                      Share Profile
                     </Button>
                   </div>
                 </div>
