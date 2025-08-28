@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { NavLink, useNavigate, useLocation } from "react-router-dom"
-import { Store, Menu, X, User, ChevronDown, MessageCircle, Sun, Moon } from "lucide-react"
+import { Store, Menu, X, User, ChevronDown, MessageCircle, Sun, Moon, FileText, Heart, LogOut } from "lucide-react"
 import { auth } from "./firebase/config"
 import { signOut } from "firebase/auth"
 import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore"
@@ -231,21 +231,21 @@ const Navbar = () => {
                     <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-md py-1 z-50 border border-gray-100 dark:border-gray-700">
                       <NavLink
                         to="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 font-medium"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         My Profile
                       </NavLink>
                       <NavLink
                         to="/removeItem"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         My Listings
                       </NavLink>
                       <NavLink
                         to="/favorites"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         My Favorites
@@ -381,19 +381,19 @@ const Navbar = () => {
               <div className="space-y-1">
                 <NavLink
                   to="/profile"
-                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 hover:text-purple-600"
+                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   My Profile
                 </NavLink>
                 <NavLink
                   to="/removeItem"
-                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 hover:text-purple-600"
+                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   My Listings
                 </NavLink>
                 <NavLink
                   to="/favorites"
-                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 hover:text-purple-600"
+                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
                 >
                   My Favorites
                 </NavLink>

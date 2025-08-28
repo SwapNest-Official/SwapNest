@@ -9,27 +9,26 @@ import Navbar from '../navbar';
 import { useTheme } from '../contexts/ThemeContext';
 import { getAuth, onAuthStateChanged } from "firebase/auth"
 import { getFirestore, doc, getDoc, setDoc, collection, query, where, getDocs } from "firebase/firestore"
+import { toast } from "sonner"
 
 const auth = getAuth()
 const db = getFirestore()
 
-const CategoryPage = () => {
-  const { categoryName } = useParams();
-  const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid');
+export default function CategoryPage() {
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [viewMode, setViewMode] = useState("grid")
+  const [expandedDescriptions, setExpandedDescriptions] = useState(new Set()) // Track expanded descriptions
+  const { isDarkMode } = useTheme()
   const [sortBy, setSortBy] = useState('newest');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isVisible, setIsVisible] = useState(false);
-  const [loadedProducts, setLoadedProducts] = useState([]);
-  const { isDarkMode } = useTheme();
   const [filters, setFilters] = useState({
     condition: '',
     priceRange: '',
     location: ''
   });
   const [currentUser, setCurrentUser] = useState(null)
+  const [loadedProducts, setLoadedProducts] = useState([]);
 
   useEffect(() => {
     setIsVisible(true);
@@ -104,80 +103,30 @@ const CategoryPage = () => {
     navigate(`/itemlist/product/${productId}`);
   };
 
-  const handleChatClick = async (productId, sellerName) => {
+  const handleChatClick = (productId, sellerName) => {
     if (!currentUser) {
+      toast.error("Please login to chat with sellers")
       navigate("/login")
       return
     }
+    
+    // Navigate to chat with the seller
+    navigate(`/chating?productId=${productId}&sellerName=${encodeURIComponent(sellerName)}`)
+  }
 
-    try {
-      // Get product details to create chat
-      const productRef = doc(db, "items", productId)
-      const productDoc = await getDoc(productRef)
-      
-      if (!productDoc.exists()) {
-        alert("Product not found!")
-        return
-      }
-
-      const product = productDoc.data()
-
-      // Check if user is trying to chat with their own product
-      if (currentUser.uid === product.userId) {
-        alert("You cannot chat with yourself about your own product!")
-        return
-      }
-
-      // Create chat document
-      const newChatId = `${productId}_${currentUser.uid}`
-      const chatRef = doc(db, "chats", newChatId)
-      const chatDoc = await getDoc(chatRef)
-      
-      if (!chatDoc.exists()) {
-        // Get buyer and seller data
-        const buyerRef = doc(db, "users", currentUser.uid)
-        const sellerRef = doc(db, "users", product.userId)
-        
-        const [buyerDoc, sellerDoc] = await Promise.all([
-          getDoc(buyerRef),
-          getDoc(sellerRef)
-        ])
-        
-        const buyerData = buyerDoc.exists() ? buyerDoc.data() : { fullName: "Unknown User" }
-        const sellerData = sellerDoc.exists() ? sellerDoc.data() : { fullName: "Unknown User" }
-        
-        console.log("CategoryPage: Creating chat with:", {
-          buyerName: buyerData.fullName || currentUser.displayName || "Unknown User",
-          sellerName: sellerData.fullName || "Unknown User"
-        })
-        
-        await setDoc(chatRef, {
-          chatId: newChatId,
-          productId: productId,
-          productTitle: product.title || product.name,
-          buyerId: currentUser.uid,
-          sellerId: product.userId,
-          buyerName: buyerData.fullName || currentUser.displayName || "Unknown User",
-          sellerName: sellerData.fullName || sellerName || "Unknown User",
-          lastMessage: "",
-          lastUpdated: new Date().toISOString(),
-          productImage: product.images?.[0] || "",
-          productPrice: product.price || 0,
-          productCategory: product.category || "General"
-        })
-        
-        console.log("CategoryPage: Chat created successfully with ID:", newChatId)
+  // Toggle description expansion
+  const toggleDescription = (e, productId) => {
+    e.stopPropagation()
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(productId)) {
+        newSet.delete(productId)
       } else {
-        console.log("CategoryPage: Chat already exists:", newChatId)
+        newSet.add(productId)
       }
-
-      // Navigate to chat interface
-      navigate(`/chating?chatId=${newChatId}`)
-    } catch (error) {
-      console.error("Error creating chat:", error)
-      alert("Failed to start chat. Please try again.")
-    }
-  };
+      return newSet
+    })
+  }
 
   const sortProducts = (products, sortBy) => {
     switch (sortBy) {
@@ -339,7 +288,7 @@ const CategoryPage = () => {
                 }`}
                 style={{ transitionDelay: `${index * 150}ms` }}
               >
-                <Card className={`group cursor-pointer h-full bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 ${
+                <Card className={`product-card group cursor-pointer h-full bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 ${
                   viewMode === 'list' ? 'flex flex-row' : 'flex flex-col'
                 }`}>
                   {/* Product Image */}
@@ -363,11 +312,26 @@ const CategoryPage = () => {
                     viewMode === 'list' ? 'justify-center' : 'justify-between'
                   }`}>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {product.name}
+                      <h3 className="product-title text-lg font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {product.name && product.name.length > 50 
+                          ? `${product.name.substring(0, 50)}...` 
+                          : product.name}
                       </h3>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm mb-3 line-clamp-2">
-                        {product.description}
+                      <p className="product-description text-gray-600 dark:text-gray-300 text-sm mb-3">
+                        {expandedDescriptions.has(product.id) 
+                          ? product.description 
+                          : (product.description && product.description.length > 100 
+                              ? `${product.description.substring(0, 100)}...` 
+                              : product.description)
+                        }
+                        {product.description && product.description.length > 100 && (
+                          <button
+                            onClick={(e) => toggleDescription(e, product.id)}
+                            className="read-more-btn ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-xs"
+                          >
+                            {expandedDescriptions.has(product.id) ? 'Show less' : 'Read more'}
+                          </button>
+                        )}
                       </p>
                       
                       <div className="flex items-center gap-2 mb-3">
@@ -480,5 +444,3 @@ const CategoryPage = () => {
     </div>
   );
 };
-
-export default CategoryPage;

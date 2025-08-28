@@ -50,9 +50,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-gray-200 dark:border-gray-700;
-  }
   body {
     @apply bg-background text-foreground;
   }
@@ -78,4 +75,226 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Product card text improvements */
+.product-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.product-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+/* Responsive text sizing */
+@media (max-width: 640px) {
+  .product-title {
+    -webkit-line-clamp: 2;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  .product-description {
+    -webkit-line-clamp: 2;
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .product-title {
+    -webkit-line-clamp: 2;
+    font-size: 1rem;
+    line-height: 1.375rem;
+  }
+  
+  .product-description {
+    -webkit-line-clamp: 3;
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .product-title {
+    -webkit-line-clamp: 2;
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+  }
+  
+  .product-description {
+    -webkit-line-clamp: 3;
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* Enhanced product card responsiveness */
+.product-card {
+  transition: all 0.3s ease;
+  min-height: 400px;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dark .product-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Better text wrapping for long content */
+.text-wrap-balance {
+  text-wrap: balance;
+}
+
+/* Enhanced product card responsiveness */
+.product-card {
+  transition: all 0.3s ease;
+  min-height: 400px;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dark .product-card:hover {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Better text readability */
+.product-title {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.product-description {
+  line-height: 1.6;
+  color: #4B5563;
+}
+
+.dark .product-description {
+  color: #D1D5DB;
+}
+
+/* Read more button styling */
+.read-more-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: all 0.2s ease;
+}
+
+.read-more-btn:hover {
+  opacity: 0.8;
+}
+
+/* Improved text contrast for better accessibility */
+.product-card .text-gray-600 {
+  color: #374151;
+}
+
+.dark .product-card .text-gray-600 {
+  color: #E5E7EB;
+}
+
+.product-card .text-gray-700 {
+  color: #374151;
+}
+
+.dark .product-card .text-gray-700 {
+  color: #D1D5DB;
+}
+
+/* Improved spacing for mobile */
+@media (max-width: 640px) {
+  .product-card {
+    min-height: 350px;
+  }
+  
+  .product-card .p-4 {
+    padding: 0.75rem;
+  }
+  
+  .product-card .mb-3 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .product-title {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-description {
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    -webkit-line-clamp: 2;
+  }
+  
+  .read-more-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0;
+  }
+}
+
+/* Tablet responsiveness */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .product-card {
+    min-height: 380px;
+  }
+  
+  .product-title {
+    font-size: 1rem;
+    line-height: 1.375rem;
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-description {
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+    -webkit-line-clamp: 3;
+  }
+}
+
+/* Desktop enhancements */
+@media (min-width: 1025px) {
+  .product-card {
+    min-height: 420px;
+  }
+  
+  .product-title {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    -webkit-line-clamp: 2;
+  }
+  
+  .product-description {
+    font-size: 0.875rem;
+    line-height: 1.5rem;
+    -webkit-line-clamp: 3;
+  }
+  
+  .product-card:hover .product-title {
+    color: #2563EB;
+  }
+  
+  .dark .product-card:hover .product-title {
+    color: #60A5FA;
+  }
 }

@@ -24,6 +24,7 @@ export default function ProductListPage() {
   const [favorites, setFavorites] = useState(new Set()) // Set of favorite product IDs
   const [isVisible, setIsVisible] = useState(false) // For lazy loading animations
   const [loadedProducts, setLoadedProducts] = useState([]) // For staggered product animations
+  const [expandedDescriptions, setExpandedDescriptions] = useState(new Set()) // Track expanded descriptions
   const { isDarkMode } = useTheme()
 
   const { categoryRoute } = useParams()
@@ -99,17 +100,30 @@ export default function ProductListPage() {
             addedAt: new Date(),
             title: product.title,
             price: product.price,
-            images: product.images,
-            category: product.category,
-            listingType: product.listingType
+            image: product.images?.[0],
+            category: product.category
           })
           toast.success("Added to favorites")
         }
       }
     } catch (error) {
       console.error("Error toggling favorite:", error)
-      toast.error("Failed to update favorites. Please try again.")
+      toast.error("Failed to update favorites")
     }
+  }
+
+  // Toggle description expansion
+  const toggleDescription = (e, productId) => {
+    e.stopPropagation()
+    setExpandedDescriptions(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(productId)) {
+        newSet.delete(productId)
+      } else {
+        newSet.add(productId)
+      }
+      return newSet
+    })
   }
 
   useEffect(() => {
@@ -362,7 +376,7 @@ export default function ProductListPage() {
                 style={{ transitionDelay: `${index * 150}ms` }}
                 onClick={() => setSelectedProductId(product.id)}
               >
-                <div className={`bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 h-full flex flex-col ${
+                <div className={`product-card bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 h-full flex flex-col ${
                   product.listingType === "rent" ? "ring-2 ring-purple-200 dark:ring-purple-800" : ""
                 } ${product.listingType === "donate" ? "ring-2 ring-emerald-200 dark:ring-emerald-800" : ""}`}>
                   
@@ -424,12 +438,27 @@ export default function ProductListPage() {
                       </span>
                     </div>
                     
-                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-1">
-                      {product.title}
+                    <h3 className="product-title text-lg sm:text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-1">
+                      {product.title && product.title.length > 60 
+                        ? `${product.title.substring(0, 60)}...` 
+                        : product.title}
                     </h3>
                     
-                    <p className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4 line-clamp-2 flex-1">
-                      {product.description}
+                    <p className="product-description text-gray-600 dark:text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4 flex-1">
+                      {expandedDescriptions.has(product.id) 
+                        ? product.description 
+                        : (product.description && product.description.length > 120 
+                            ? `${product.description.substring(0, 120)}...` 
+                            : product.description)
+                      }
+                      {product.description && product.description.length > 120 && (
+                        <button
+                          onClick={(e) => toggleDescription(e, product.id)}
+                          className="read-more-btn ml-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-xs"
+                        >
+                          {expandedDescriptions.has(product.id) ? 'Show less' : 'Read more'}
+                        </button>
+                      )}
                     </p>
                     
                     {/* Price Section */}

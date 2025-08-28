@@ -1,167 +1,177 @@
-# 🤝 Contributing to UniBay
+# Contributing to SwapNest
 
-Thank you for your interest in contributing to UniBay! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to SwapNest! This document provides guidelines and information for contributors.
 
-## 🚀 Getting Started
+## 🤝 How to Contribute
 
-### Prerequisites
-- Node.js 18+
+### **Types of Contributions**
+
+We welcome various types of contributions:
+
+- 🐛 **Bug Reports**: Help us identify and fix issues
+- ✨ **Feature Requests**: Suggest new features or improvements
+- 📝 **Documentation**: Improve our docs and guides
+- 🎨 **UI/UX Improvements**: Enhance the user interface
+- 🧪 **Testing**: Help test features and report bugs
+- 🔧 **Code Contributions**: Submit pull requests with code changes
+
+### **Before You Start**
+
+1. **Check Existing Issues**: Look through existing issues and pull requests
+2. **Read Documentation**: Familiarize yourself with the project structure
+3. **Join Discussions**: Participate in GitHub Discussions for questions
+
+## 🚀 Development Setup
+
+### **Prerequisites**
+
+- Node.js 18+ 
+- npm or yarn
 - Git
-- A GitHub account
-- Basic knowledge of React, Node.js, and MongoDB
+- Firebase account (for testing)
 
-### Setup Development Environment
-1. **Fork** the repository
-2. **Clone** your fork locally
-3. **Install** dependencies
-4. **Set up** environment variables
-5. **Start** development servers
+### **Local Development**
 
-```bash
-# Fork and clone
-git clone https://github.com/YOUR_USERNAME/UniBay.git
-cd UniBay
+1. **Fork the Repository**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/SwapNest.git
+   cd SwapNest
+   ```
 
-# Install dependencies
-npm install
-cd backend && npm install && cd ..
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
 
-# Set up environment (copy from examples)
-cp env.production.example .env.local
-cp backend/env.production.example backend/config.env
+3. **Environment Setup**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your Firebase credentials
+   ```
 
-# Start development
-npm run dev  # Frontend
-cd backend && npm run dev  # Backend
-```
+4. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
 
-## 📋 Contribution Guidelines
+## 📝 Making Changes
 
-### Code Style
-- Follow the existing code style and formatting
-- Use meaningful variable and function names
-- Add comments for complex logic
-- Keep functions small and focused
-- Use TypeScript-like prop types for React components
+### **Code Style Guidelines**
 
-### Commit Messages
+- **React**: Use functional components with hooks
+- **JavaScript**: Use ES6+ features, avoid var
+- **CSS**: Use Tailwind CSS classes, avoid custom CSS when possible
+- **Naming**: Use descriptive names, follow camelCase for variables
+
+### **Commit Message Format**
+
 Use conventional commit format:
+
 ```
 type(scope): description
 
-Examples:
-feat(auth): add OAuth login support
-fix(chat): resolve message display issue
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes
+- `refactor`: Code refactoring
+- `test`: Adding tests
+- `chore`: Maintenance tasks
+
+**Examples:**
+```
+feat(chat): add real-time message notifications
+fix(auth): resolve login redirect issue
 docs(readme): update installation instructions
 style(ui): improve button hover effects
-refactor(api): optimize database queries
-test(auth): add unit tests for login
 ```
 
-### Pull Request Process
-1. **Create** a feature branch from `main`
-2. **Make** your changes
-3. **Test** thoroughly
-4. **Update** documentation if needed
-5. **Submit** a pull request with clear description
+### **Pull Request Process**
 
-### Pull Request Template
-```markdown
-## Description
-Brief description of changes
+1. **Create Feature Branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-## Type of Change
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Documentation update
-- [ ] Performance improvement
-- [ ] Code refactoring
+2. **Make Changes**
+   - Write clean, readable code
+   - Add tests if applicable
+   - Update documentation
 
-## Testing
-- [ ] Local testing completed
-- [ ] All tests pass
-- [ ] No console errors
+3. **Commit Changes**
+   ```bash
+   git add .
+   git commit -m "feat(scope): description"
+   ```
 
-## Screenshots (if applicable)
-Add screenshots for UI changes
+4. **Push to Fork**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
 
-## Checklist
-- [ ] Code follows project style
-- [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] No breaking changes
-```
-
-## 🏗️ Project Structure
-
-### Frontend (`src/`)
-```
-src/
-├── components/        # Reusable UI components
-├── contexts/          # React contexts
-├── ecommerce/         # Marketplace features
-├── chatSystem/        # Chat functionality
-├── ProductDetails/    # Product pages
-├── authentication/    # Auth components
-└── utils/            # Utility functions
-```
-
-### Backend (`backend/`)
-```
-backend/
-├── models/           # MongoDB schemas
-├── routes/           # API endpoints
-├── middleware/       # Custom middleware
-├── utils/            # Utility functions
-└── config.env        # Environment variables
-```
+5. **Create Pull Request**
+   - Use the PR template
+   - Describe changes clearly
+   - Link related issues
+   - Request reviews from maintainers
 
 ## 🧪 Testing
 
-### Frontend Testing
-```bash
-# Run tests
-npm test
+### **Running Tests**
 
-# Run tests with coverage
-npm run test:coverage
+```bash
+# Run all tests
+npm test
 
 # Run tests in watch mode
 npm run test:watch
-```
-
-### Backend Testing
-```bash
-cd backend
-
-# Run tests
-npm test
 
 # Run tests with coverage
 npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
 ```
 
-## 🐛 Bug Reports
+### **Testing Guidelines**
 
-### Before Submitting
-1. **Check** existing issues
-2. **Reproduce** the bug
-3. **Check** browser console for errors
-4. **Verify** environment setup
+- Write tests for new features
+- Ensure existing tests pass
+- Test on multiple devices/browsers
+- Test both light and dark themes
 
-### Bug Report Template
+## 📚 Documentation
+
+### **Documentation Standards**
+
+- Use clear, concise language
+- Include code examples
+- Add screenshots for UI changes
+- Keep documentation up-to-date
+
+### **Documentation Areas**
+
+- README.md
+- Component documentation
+- API documentation
+- Deployment guides
+- Contributing guidelines
+
+## 🐛 Reporting Issues
+
+### **Bug Report Template**
+
 ```markdown
 ## Bug Description
-Clear description of the issue
+Brief description of the issue
 
 ## Steps to Reproduce
 1. Go to '...'
 2. Click on '...'
-3. Scroll down to '...'
-4. See error
+3. See error
 
 ## Expected Behavior
 What should happen
@@ -174,120 +184,120 @@ What actually happens
 - Browser: [e.g., Chrome, Firefox, Safari]
 - Version: [e.g., 22]
 
+## Screenshots
+If applicable, add screenshots
+
 ## Additional Context
-Screenshots, logs, or other relevant information
+Any other context about the problem
 ```
 
-## 💡 Feature Requests
+### **Feature Request Template**
 
-### Before Submitting
-1. **Check** existing feature requests
-2. **Consider** if it aligns with project goals
-3. **Think** about implementation complexity
-4. **Discuss** in issues before coding
-
-### Feature Request Template
 ```markdown
 ## Feature Description
-Clear description of the feature
+Brief description of the feature
 
 ## Problem Statement
-What problem does this solve?
+What problem does this feature solve?
 
 ## Proposed Solution
-How should this be implemented?
+How should this feature work?
 
 ## Alternatives Considered
-Other approaches you've considered
+Other solutions you've considered
 
 ## Additional Context
-Screenshots, mockups, or examples
+Any other context or screenshots
 ```
 
-## 📚 Documentation
+## 🔍 Code Review Process
 
-### What to Document
-- New features and their usage
-- API endpoints and parameters
-- Configuration options
-- Troubleshooting guides
-- Performance considerations
+### **Review Guidelines**
 
-### Documentation Standards
-- Use clear, concise language
-- Include code examples
-- Add screenshots for UI features
-- Keep documentation up-to-date
-- Use consistent formatting
+- Be constructive and respectful
+- Focus on code quality and functionality
+- Suggest improvements when possible
+- Approve only when satisfied
 
-## 🔒 Security
+### **Review Checklist**
 
-### Reporting Security Issues
-- **DO NOT** create public issues for security vulnerabilities
-- **Email** security@unibay.com with details
-- **Include** reproduction steps
-- **Wait** for response before disclosure
+- [ ] Code follows project style guidelines
+- [ ] Functionality works as expected
+- [ ] Tests pass and coverage is adequate
+- [ ] Documentation is updated
+- [ ] No security vulnerabilities
+- [ ] Performance considerations addressed
 
-### Security Best Practices
-- Never commit sensitive data
-- Use environment variables for secrets
-- Validate all user inputs
-- Implement proper authentication
-- Follow OWASP guidelines
+## 🏷️ Labels and Milestones
 
-## 🎯 Areas for Contribution
+### **Issue Labels**
 
-### High Priority
-- [ ] Performance optimization
-- [ ] Accessibility improvements
-- [ ] Mobile responsiveness
-- [ ] Error handling
-- [ ] Testing coverage
+- `bug`: Something isn't working
+- `enhancement`: New feature or request
+- `documentation`: Improvements or additions to documentation
+- `good first issue`: Good for newcomers
+- `help wanted`: Extra attention is needed
+- `priority: high`: High priority issues
+- `priority: low`: Low priority issues
 
-### Medium Priority
-- [ ] UI/UX improvements
-- [ ] Documentation updates
-- [ ] Code refactoring
-- [ ] New features
-- [ ] Bug fixes
+### **Pull Request Labels**
 
-### Low Priority
-- [ ] Code style improvements
-- [ ] Minor UI tweaks
-- [ ] Documentation formatting
-- [ ] Performance monitoring
+- `ready for review`: Ready for maintainer review
+- `work in progress`: Still being worked on
+- `needs review`: Requires code review
+- `approved`: Approved by maintainers
 
-## 🏆 Recognition
+## 🎯 Project Goals
 
-### Contributors Hall of Fame
-- **Gold Contributors**: 10+ significant contributions
-- **Silver Contributors**: 5+ contributions
-- **Bronze Contributors**: 1+ contribution
+### **Current Focus Areas**
 
-### How to Get Recognized
-- Submit quality pull requests
-- Help with documentation
-- Report and fix bugs
-- Participate in discussions
-- Help other contributors
+- **Performance**: Improve loading times and responsiveness
+- **Accessibility**: Ensure WCAG compliance
+- **Mobile Experience**: Optimize for mobile devices
+- **Testing**: Increase test coverage
+- **Documentation**: Improve developer experience
+
+### **Long-term Vision**
+
+- **Scalability**: Handle larger user bases
+- **Internationalization**: Support multiple languages
+- **Advanced Features**: AI-powered recommendations
+- **Mobile App**: Native mobile applications
 
 ## 📞 Getting Help
 
-### Communication Channels
-- **GitHub Issues**: For bugs and feature requests
-- **GitHub Discussions**: For questions and discussions
-- **Email**: support@uniBay.com for general support
+### **Communication Channels**
 
-### Before Asking for Help
-1. **Check** existing documentation
-2. **Search** existing issues
-3. **Try** to solve the problem yourself
-4. **Provide** clear, detailed information
+- **GitHub Issues**: For bug reports and feature requests
+- **GitHub Discussions**: For questions and general discussion
+- **Pull Requests**: For code contributions
+- **Email**: [Your Email] for private matters
 
-## 🙏 Thank You
+### **Community Guidelines**
 
-Thank you for contributing to UniBay! Your contributions help make campus commerce better for students worldwide.
+- Be respectful and inclusive
+- Help others when possible
+- Share knowledge and experiences
+- Follow the project's code of conduct
+
+## 🙏 Recognition
+
+### **Contributor Recognition**
+
+- Contributors are listed in the README
+- Significant contributions are highlighted
+- Regular contributors may become maintainers
+- All contributors are appreciated and valued
+
+### **Contributor Types**
+
+- **Contributors**: Anyone who contributes code or documentation
+- **Maintainers**: Regular contributors with merge access
+- **Reviewers**: Contributors who help review code
+- **Users**: People who use and provide feedback
 
 ---
 
-**Remember**: Every contribution, no matter how small, makes a difference! 🚀
+**Thank you for contributing to SwapNest!** 🎉
+
+Your contributions help make this project better for everyone in the campus community.

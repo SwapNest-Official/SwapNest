@@ -1,290 +1,267 @@
-# 🚀 UniBay - Campus Marketplace
+# 🏫 UniBay - Campus Marketplace
 
-> **A modern, responsive campus marketplace platform built with React, Node.js, and Firebase**
+A modern, responsive campus marketplace platform built with React, Firebase, and Tailwind CSS. Connect students to buy, sell, rent, or donate items within their campus community.
 
-[![React](https://img.shields.io/badge/React-18.2.0-blue.svg)](https://reactjs.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![Firebase](https://img.shields.io/badge/Firebase-10.0+-orange.svg)](https://firebase.google.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-7.0+-green.svg)](https://www.mongodb.com/)
-[![Redis](https://img.shields.io/badge/Redis-Upstash-red.svg)](https://upstash.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.3+-38B2AC.svg)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Vite-4.4+-646CFF.svg)](https://vitejs.dev/)
+## ✨ Features
 
-## 🌟 **Features**
-
-### 🛍️ **Marketplace Features**
-- **Product Listings**: Buy, sell, rent, or donate items
-- **Category Management**: Organized product categories
-- **Search & Filters**: Advanced search with multiple filters
-- **Favorites System**: Save items for later
-- **Real-time Updates**: Live product availability
-
-### 💬 **Communication System**
-- **Chat Interface**: Direct messaging between buyers and sellers
-- **Real-time Messaging**: Instant message delivery
-- **Unread Notifications**: Visual indicators for new messages
-- **Chat History**: Persistent conversation storage
-
-### 👤 **User Management**
-- **Authentication**: Firebase Auth with email/password
-- **User Profiles**: Detailed seller/buyer profiles
-- **Rating System**: Review and rate sellers
-- **Follow System**: Follow favorite sellers
-- **Profile Sharing**: Share profiles via links
+### 🛍️ **Core Functionality**
+- **Multi-listing Types**: Sell, Rent, or Donate items
+- **Real-time Chat**: Built-in messaging system between buyers and sellers
+- **Smart Search**: Advanced filtering by category, condition, and keywords
+- **Favorites System**: Save and manage your favorite items
+- **User Profiles**: Complete user management with ratings and reviews
 
 ### 🎨 **Modern UI/UX**
-- **Responsive Design**: Mobile-first approach
-- **Dark/Light Mode**: Theme switching capability
-- **Lazy Loading**: Smooth animations and transitions
-- **Modern Components**: Built with Shadcn/ui
-- **Accessibility**: WCAG compliant design
+- **Responsive Design**: Optimized for all devices (mobile-first approach)
+- **Dark/Light Mode**: Toggle between themes with persistent preferences
+- **Lazy Loading**: Smooth animations and staggered content loading
+- **Interactive Elements**: Hover effects, transitions, and micro-interactions
 
-### 🚀 **Performance & Security**
-- **Redis Caching**: Fast response times
-- **Rate Limiting**: API protection
-- **CORS Configuration**: Secure cross-origin requests
-- **JWT Authentication**: Secure API access
-- **File Upload**: Cloudinary integration
+### 🔐 **Authentication & Security**
+- **Firebase Auth**: Secure user authentication and management
+- **Real-time Database**: Firestore for live data synchronization
+- **File Upload**: Secure image handling for product listings
+- **Role-based Access**: Buyer/Seller permissions and restrictions
 
-## 🏗️ **Tech Stack**
+### 📱 **Mobile-First Experience**
+- **Progressive Web App**: Works seamlessly across all devices
+- **Touch-Optimized**: Gesture-friendly interface for mobile users
+- **Offline Support**: Cached data and offline functionality
+- **Push Notifications**: Real-time updates for messages and favorites
+
+## 🚀 Tech Stack
 
 ### **Frontend**
-- **React 18** - Modern React with hooks
-- **Vite** - Fast build tool and dev server
+- **React 18** - Modern React with hooks and functional components
+- **Vite** - Lightning-fast build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
-- **Shadcn/ui** - Beautiful UI components
-- **Firebase** - Authentication and real-time database
-- **React Router** - Client-side routing
+- **Shadcn/ui** - Beautiful, accessible component library
+- **Lucide React** - Consistent icon system
 
-### **Backend**
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web application framework
-- **MongoDB** - NoSQL database
-- **Mongoose** - MongoDB object modeling
-- **Redis (Upstash)** - In-memory caching
-- **JWT** - JSON Web Token authentication
+### **Backend & Services**
+- **Firebase** - Authentication, Firestore database, and hosting
+- **Firestore** - NoSQL cloud database with real-time updates
+- **Firebase Storage** - Secure file upload and management
+- **Redis (Upstash)** - High-performance caching layer
 
-### **Services**
-- **Firebase Auth** - User authentication
-- **Firestore** - Real-time database
-- **Cloudinary** - Image and file management
-- **Nodemailer** - Email services
-- **Multer** - File upload handling
+### **Development Tools**
+- **ESLint** - Code quality and consistency
+- **PostCSS** - CSS processing and optimization
+- **Autoprefixer** - Automatic vendor prefixing
 
-## 🚀 **Quick Start**
+## 🏗️ Project Structure
+
+```
+src/
+├── components/          # Reusable UI components
+│   └── ui/             # Shadcn/ui components
+├── contexts/            # React context providers
+├── ecommerce/           # Product listing and category pages
+├── chatSystem/          # Real-time messaging system
+├── ProductDetails/      # Product detail views
+├── authentication/      # Login/signup components
+├── firebase/            # Firebase configuration
+├── lib/                 # Utility functions
+└── utils/               # Helper functions
+```
+
+## 🚀 Getting Started
 
 ### **Prerequisites**
 - Node.js 18+ 
-- MongoDB database
-- Firebase project
-- Redis instance (Upstash recommended)
+- npm or yarn
+- Firebase account
+- Upstash Redis account (optional)
 
-### **1. Clone the Repository**
-```bash
-git clone https://github.com/optimus-prime-01/UniBay.git
-cd UniBay
+### **Installation**
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/SwapNest-Official/SwapNest.git
+   cd SwapNest
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Setup**
+   Create `.env` file in the root directory:
+   ```env
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+4. **Firebase Configuration**
+   - Create a new Firebase project
+   - Enable Authentication, Firestore, and Storage
+   - Add your web app and copy configuration
+
+5. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+
+## 📱 Key Pages & Features
+
+### **🏠 Home Page**
+- Hero section with search functionality
+- Featured categories and trending items
+- Quick access to add new listings
+
+### **📋 Product Listings**
+- Grid and list view options
+- Advanced filtering and sorting
+- Responsive product cards with expandable descriptions
+- Real-time favorites and chat integration
+
+### **💬 Chat System**
+- Real-time messaging between users
+- Unread message indicators
+- Chat history and product context
+- Mobile-optimized interface
+
+### **👤 User Profiles**
+- Complete user information
+- Listing management
+- Follower/Following system
+- Rating and review system
+
+### **➕ Add Items**
+- Multi-step listing creation
+- Image upload with preview
+- Category and condition selection
+- Pricing and description management
+
+## 🎯 Core Features Deep Dive
+
+### **Smart Product Management**
+- **Condition Tracking**: New, Like New, Good, Fair
+- **Category Organization**: Electronics, Books, Clothing, etc.
+- **Price Flexibility**: Fixed price, rental rates, or free donation
+- **Image Management**: Multiple image support with optimization
+
+### **Advanced Search & Filtering**
+- **Text Search**: Product titles and descriptions
+- **Category Filtering**: Dynamic category selection
+- **Condition Filtering**: Filter by item condition
+- **Price Range**: Set minimum and maximum prices
+
+### **Real-time Communication**
+- **Instant Messaging**: Real-time chat with WebSocket-like updates
+- **Product Context**: Chat includes product details and images
+- **Read Receipts**: Track message delivery and reading status
+- **Notification System**: Alert users of new messages
+
+### **User Experience Features**
+- **Responsive Design**: Optimized for all screen sizes
+- **Dark Mode**: Eye-friendly theme switching
+- **Lazy Loading**: Progressive content loading
+- **Smooth Animations**: CSS transitions and micro-interactions
+
+## 🔧 Configuration
+
+### **Tailwind CSS**
+The project uses Tailwind CSS v3 with custom configuration:
+- Custom color schemes
+- Responsive breakpoints
+- Dark mode support
+- Component-specific utilities
+
+### **Firebase Setup**
+```javascript
+// firebase/config.js
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
+
+const firebaseConfig = {
+  // Your Firebase configuration
+}
+
+const app = initializeApp(firebaseConfig)
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+export const storage = getStorage(app)
 ```
 
-### **2. Install Dependencies**
-```bash
-# Install frontend dependencies
-npm install
-
-# Install backend dependencies
-cd backend
-npm install
-cd ..
+### **Theme Context**
+Global theme management with localStorage persistence:
+```javascript
+// contexts/ThemeContext.jsx
+export const ThemeContext = createContext()
+export const useTheme = () => useContext(ThemeContext)
 ```
 
-### **3. Environment Setup**
+## 📱 Responsive Design
 
-#### **Frontend (.env.local)**
-```env
-VITE_API_URL=http://localhost:5001
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_GA_MEASUREMENT_ID=G-3KHJY2RDS3
-```
+### **Breakpoints**
+- **Mobile**: ≤640px (1 column grid)
+- **Tablet**: 641px-1024px (2-3 column grid)
+- **Desktop**: ≥1025px (4 column grid)
 
-#### **Backend (config.env)**
-```env
-MONGODB_URI=your_mongodb_connection_string
-PORT=5001
-NODE_ENV=development
-JWT_SECRET=your_jwt_secret
-MAIL_USERNAME=your_email@gmail.com
-MAIL_PASSWORD=your_app_password
-MAIL_FROM=your_email@gmail.com
-UPSTASH_REDIS_REST_URL=your_redis_url
-UPSTASH_REDIS_REST_TOKEN=your_redis_token
-CORS_ORIGINS=http://localhost:5173,http://localhost:3000
-```
+### **Mobile-First Approach**
+- Touch-friendly buttons and interactions
+- Optimized spacing for mobile devices
+- Swipe gestures for navigation
+- Progressive disclosure of information
 
-### **4. Start Development Servers**
-```bash
-# Start backend server
-cd backend
-npm run dev
-
-# Start frontend (in new terminal)
-npm run dev
-```
-
-Visit `http://localhost:5173` to see your app!
-
-## 📱 **Screenshots**
-
-### **Home Page**
-![Home Page](screenshots/home.png)
-
-### **Product Details**
-![Product Details](screenshots/product-details.png)
-
-### **Chat Interface**
-![Chat Interface](screenshots/chat.png)
-
-### **User Profile**
-![User Profile](screenshots/profile.png)
-
-## 🚀 **Deployment**
-
-### **Backend (Render)**
-1. **Connect Repository** to Render
-2. **Set Environment Variables** from `backend/env.production.example`
-3. **Build Command**: `npm install`
-4. **Start Command**: `npm start`
-5. **Set PORT**: `10000`
+## 🚀 Deployment
 
 ### **Frontend (Vercel)**
-1. **Import Project** from GitHub
-2. **Set Environment Variables** from `env.production.example`
-3. **Build Command**: `npm run build`
-4. **Output Directory**: `dist`
-5. **Framework Preset**: Vite
+1. Connect your GitHub repository to Vercel
+2. Set environment variables
+3. Deploy automatically on push to main branch
 
-### **Environment Variables for Production**
-```env
-# Backend
-CORS_ORIGINS=https://your-app.vercel.app
-NODE_ENV=production
-PORT=10000
+### **Backend (Firebase)**
+1. Configure Firebase hosting
+2. Set up Firestore security rules
+3. Configure authentication providers
+4. Deploy with Firebase CLI
 
-# Frontend
-VITE_API_URL=https://your-backend.onrender.com
-VITE_APP_ENVIRONMENT=production
-```
+## 🤝 Contributing
 
-## 🏗️ **Project Structure**
+We welcome contributions! Please read our contributing guidelines:
 
-```
-UniBay/
-├── src/                    # Frontend source code
-│   ├── components/        # Reusable UI components
-│   ├── contexts/          # React contexts (Theme, etc.)
-│   ├── ecommerce/         # Marketplace components
-│   ├── chatSystem/        # Chat functionality
-│   ├── ProductDetails/    # Product detail pages
-│   ├── authentication/    # Auth components
-│   └── utils/            # Utility functions
-├── backend/               # Backend source code
-│   ├── models/           # MongoDB schemas
-│   ├── routes/           # API endpoints
-│   ├── middleware/       # Custom middleware
-│   ├── utils/            # Utility functions
-│   └── config.env        # Environment variables
-├── public/               # Static assets
-├── dist/                 # Build output
-└── docs/                 # Documentation
-```
-
-## 🔧 **API Endpoints**
-
-### **Authentication**
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/logout` - User logout
-
-### **Products**
-- `GET /api/products` - Get all products
-- `GET /api/products/:id` - Get product by ID
-- `POST /api/products` - Create new product
-- `PUT /api/products/:id` - Update product
-- `DELETE /api/products/:id` - Delete product
-
-### **Users**
-- `GET /api/users/:id` - Get user profile
-- `PUT /api/users/:id` - Update user profile
-- `POST /api/users/:id/follow` - Follow user
-- `DELETE /api/users/:id/follow` - Unfollow user
-
-### **Orders**
-- `GET /api/orders` - Get user orders
-- `POST /api/orders` - Create new order
-- `PUT /api/orders/:id` - Update order status
-
-## 🧪 **Testing**
-
-```bash
-# Run frontend tests
-npm test
-
-# Run backend tests
-cd backend
-npm test
-```
-
-## 📊 **Performance**
-
-- **Lighthouse Score**: 95+ (Performance, Accessibility, Best Practices, SEO)
-- **Bundle Size**: Optimized with Vite
-- **Caching**: Redis for API responses
-- **Lazy Loading**: Component and image optimization
-
-## 🤝 **Contributing**
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/AmazingFeature`)
-3. **Commit** your changes (`git commit -m 'Add some AmazingFeature'`)
-4. **Push** to the branch (`git push origin feature/AmazingFeature`)
-5. **Open** a Pull Request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ### **Development Guidelines**
-- Follow ESLint configuration
-- Use conventional commit messages
-- Write meaningful commit descriptions
-- Test your changes before submitting
+- Follow React best practices
+- Use TypeScript for new components
+- Maintain responsive design principles
+- Write meaningful commit messages
+- Test on multiple devices and browsers
 
-## 📝 **License**
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👥 **Team**
+## 🙏 Acknowledgments
 
-- **Anmol Sinha** - Full Stack Developer & Co-founder
-- **Anmol Gupta** - Full Stack Developer & Co-founder
+- **Shadcn/ui** for beautiful component library
+- **Tailwind CSS** for utility-first styling
+- **Firebase** for backend services
+- **Vite** for fast development experience
+- **React Community** for excellent documentation
 
-## 🙏 **Acknowledgments**
+## 📞 Support
 
-- [Firebase](https://firebase.google.com/) for authentication and database
-- [Tailwind CSS](https://tailwindcss.com/) for styling
-- [Shadcn/ui](https://ui.shadcn.com/) for beautiful components
-- [Vite](https://vitejs.dev/) for fast development
-- [MongoDB](https://www.mongodb.com/) for database
-- [Redis](https://redis.io/) for caching
-
-## 📞 **Support**
-
-- **Email**: support@unibay.com
-- **Issues**: [GitHub Issues](https://github.com/optimus-prime-01/UniBay/issues)
-- **Documentation**: [Wiki](https://github.com/optimus-prime-01/UniBay/wiki)
+- **Issues**: [GitHub Issues](https://github.com/SwapNest-Official/SwapNest/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/SwapNest-Official/SwapNest/discussions)
+- **Email**: [Your Email]
 
 ---
 
-<div align="center">
-  <p>Made with ❤️ by the UniBay Team</p>
-  <p>Building the future of campus commerce</p>
-</div>
+**Built with ❤️ for the campus community**
+
+*UniBay - Where campus commerce meets modern technology*
