@@ -87,9 +87,9 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       return () => clearTimeout(markAsReadDebounced)
     }
   }, [messages.length, chatId, currentUser])
-  
-// console.log(messages)
-  
+
+  // console.log(messages)
+
   // Load chat info
   useEffect(() => {
     const loadChatInfo = async () => {
@@ -123,31 +123,36 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     loadChatInfo()
   }, [chatId])
 
+  console.log(images)
   // Load messages in real-time
   useEffect(() => {
     if (!chatId) return
 
     const messagesRef = collection(db, "chats", chatId, "messages")
     const q = query(messagesRef, orderBy("timestamp", "asc"))
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const messageList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      setMessages(messageList)
-      setLoading(false)
-      
-      // Scroll to bottom after messages load
-      setTimeout(() => {
-        if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
-        }
-      }, 100)
-    }, (error) => {
-      console.error("Error loading messages:", error)
-      setLoading(false)
-    })
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const messageList = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        setMessages(messageList)
+        setLoading(false)
+
+        // Scroll to bottom after messages load
+        setTimeout(() => {
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+          }
+        }, 100)
+      },
+      (error) => {
+        console.error("Error loading messages:", error)
+        setLoading(false)
+      },
+    )
 
     return () => unsubscribe()
   }, [chatId])
@@ -157,7 +162,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     if (messages.length > 0) {
       setTimeout(() => {
         if (messagesEndRef.current) {
-          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+          messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
         }
       }, 100)
     }
@@ -191,14 +196,22 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         })
 
         const finalData = await res.json()
+
+        // Prefer secure_url when available
+        const url = finalData.secure_url || finalData.url
+        if (!url) {
+          console.error("Cloudinary upload did not return a URL", finalData)
+          continue
+        }
+
         uploadedImages.push({
-          url: finalData.url,
+          url,
           name: file.name,
           type: file.type,
         })
       }
 
-      setImages([...images, ...uploadedImages])
+      setImages((prev) => [...prev, ...uploadedImages])
 
       // Reset file input
       if (fileInputRef.current) {
@@ -211,6 +224,8 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }
 
+  console.log(images)
+
   const removeImage = (index) => {
     const newImages = [...images]
     newImages.splice(index, 1)
@@ -218,13 +233,18 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
   }
 
   const sendMessage = async () => {
-    console.log("sendMessage called with:", { input: input.trim(), images: images.length, currentUser: currentUser?.uid, chatId })
-    
+    console.log("sendMessage called with:", {
+      input: input.trim(),
+      images: images.length,
+      currentUser: currentUser?.uid,
+      chatId,
+    })
+
     if ((input.trim() === "" && images.length === 0) || !currentUser) {
-      console.log("sendMessage validation failed:", { 
-        inputEmpty: input.trim() === "", 
-        noImages: images.length === 0, 
-        noUser: !currentUser 
+      console.log("sendMessage validation failed:", {
+        inputEmpty: input.trim() === "",
+        noImages: images.length === 0,
+        noUser: !currentUser,
       })
       return
     }
@@ -239,7 +259,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       }
 
       console.log("Attempting to send message:", message)
-      
+
       const docRef = await addDoc(collection(db, "chats", chatId, "messages"), message)
       console.log("Message sent successfully with ID:", docRef.id)
 
@@ -272,7 +292,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
   }
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
     }
@@ -304,7 +324,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         if (previousMessage) {
           await updateLastMessage(
             chatId,
-            previousMessage.text || "Sent an image",
+            previousMessage.content || (previousMessage.images?.length ? "Sent an image" : ""),
             previousMessage.images?.length > 0 ? "image" : "text",
             previousMessage.senderId,
           )
@@ -353,35 +373,35 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       // You could add error handling here, like showing an error toast
     }
   }
-   
+
   const getOtherUserName = () => {
     if (!chatInfo || !currentUser) return ""
-    
+
     // If we already have the names in chatInfo, use them
     if (currentUser.uid === chatInfo.buyerId && chatInfo.sellerName != null) {
       return chatInfo.sellerName
     } else if (currentUser.uid === chatInfo.sellerId && chatInfo.buyerName != null) {
       return chatInfo.buyerName
     }
-    
+
     // If names are missing, try to fetch them
     return "Loading..."
   }
 
-  const getId = ()=>{
-     if (!chatInfo || !currentUser) return ""
+  const getId = () => {
+    if (!chatInfo || !currentUser) return ""
     return currentUser.uid === chatInfo.buyerId ? chatInfo.sellerId : chatInfo.buyerId
   }
-  
+
   // Fetch user names if they're missing
   useEffect(() => {
     const fetchUserNames = async () => {
       if (!chatInfo || !currentUser) return
-      
+
       try {
         let buyerName = chatInfo.buyerName
         let sellerName = chatInfo.sellerName
-        
+
         // Fetch buyer name if missing
         if (!buyerName && chatInfo.buyerId) {
           const buyerDoc = await getDoc(doc(db, "users", chatInfo.buyerId))
@@ -394,7 +414,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             console.log("ChatRoom: Buyer document not found for ID:", chatInfo.buyerId)
           }
         }
-        
+
         // Fetch seller name if missing
         if (!sellerName && chatInfo.sellerId) {
           const sellerDoc = await getDoc(doc(db, "users", chatInfo.sellerId))
@@ -407,25 +427,25 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             console.log("ChatRoom: Seller document not found for ID:", chatInfo.sellerId)
           }
         }
-        
+
         // Update chatInfo with the fetched names
         if (buyerName !== chatInfo.buyerName || sellerName !== chatInfo.sellerName) {
-          setChatInfo(prev => ({
+          setChatInfo((prev) => ({
             ...prev,
             buyerName,
-            sellerName
+            sellerName,
           }))
         }
       } catch (error) {
         console.error("Error fetching user names:", error)
       }
     }
-    
+
     fetchUserNames()
   }, [chatInfo, currentUser])
 
-  const otherUserName = getOtherUserName();
-  const Id  = getId();
+  const otherUserName = getOtherUserName()
+  const Id = getId()
   const avatarColor = getAvatarColor(otherUserName)
 
   if (loading) {
@@ -461,19 +481,17 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
               </svg>
             </button>
           )}
-          
+
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
-                getAvatarColor(chatInfo?.otherUserName || "Unknown")
-              }`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${getAvatarColor(
+                chatInfo?.otherUserName || "Unknown",
+              )}`}
             >
               {getInitials(otherUserName || "Unknown")}
             </div>
             <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">
-                {otherUserName || "Loading..."}
-              </h2>
+              <h2 className="font-semibold text-gray-900 dark:text-white">{otherUserName || "Loading..."}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {chatInfo?.productTitle || "Product discussion"}
               </p>
@@ -502,7 +520,12 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           <div className="flex flex-col items-center justify-center h-32 text-center">
             <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-4">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s9-3.582 9-8-4.03-8-9-8-9 3.582-9 8 4.03 8 9 8z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8s9-3.582 9-8-4.03-8-9-8-9 3.582-9 8 4.03 8 9 8z"
+                />
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Start the conversation</h3>
@@ -522,22 +545,32 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                       : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
                   }`}
                 >
-                  {message.type === "image" ? (
-                    <img
-                      src={message.content}
-                      alt="Shared image"
-                      className="max-w-full h-auto rounded cursor-pointer"
-                      onClick={() => window.open(message.content, "_blank")}
-                    />
-                  ) : (
-                    <p className="text-sm">{message.content}</p>
+                  {/* Optional text content */}
+                  {message.content && message.content.trim() !== "" && <p className="text-sm">{message.content}</p>}
+
+                  {/* Images grid if present */}
+                  {Array.isArray(message.images) && message.images.length > 0 && (
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {message.images.map((img, idx) => {
+                        const src = typeof img === "string" ? img : img.url
+                        return (
+                          <img
+                            key={idx}
+                            src={src || "/placeholder.svg"}
+                            alt={`Shared image ${idx + 1}`}
+                            className="w-full h-28 object-cover rounded cursor-pointer"
+                            onClick={() => src && window.open(src, "_blank")}
+                          />
+                        )
+                      })}
+                    </div>
                   )}
-                  
-                  <div className={`text-xs mt-1 ${
-                    message.senderId === currentUser?.uid
-                      ? "text-blue-100"
-                      : "text-gray-500 dark:text-gray-400"
-                  }`}>
+
+                  <div
+                    className={`text-xs mt-1 ${
+                      message.senderId === currentUser?.uid ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
+                    }`}
+                  >
                     {formatTimeAgo(message.timestamp)}
                   </div>
                 </div>
@@ -550,48 +583,91 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
       {/* Input Area */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center gap-3">
-          {/* Image Upload Button */}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
-            title="Send image"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </button>
+        <div className="flex flex-col gap-3">
+          {/* Selected images preview */}
+          {images.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {images.map((img, idx) => (
+                <div
+                  key={idx}
+                  className="relative w-16 h-16 rounded overflow-hidden border border-gray-200 dark:border-gray-600"
+                >
+                  <img
+                    src={img.url || "/placeholder.svg"}
+                    alt={img.name || `Selected image ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(idx)}
+                    className="absolute top-1 right-1 rounded bg-black/60 text-white text-xs px-1.5 py-0.5"
+                    aria-label="Remove image"
+                    title="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
-          {/* Message Input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="hidden"
-          />
-          
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
-            className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={uploading}
-          />
+          <div className="flex items-center gap-3">
+            {/* Image Upload Button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              title="Send image"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </button>
 
-          {/* Send Button */}
-          <button
-            onClick={handleSendMessage}
-            disabled={!input.trim() || uploading}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </button>
+            {/* Hidden file input (now allows multiple) */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+
+            {/* Message Input */}
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={isUploading}
+            />
+
+            {/* Send Button */}
+            <button
+              onClick={handleSendMessage}
+              disabled={isUploading || (!input.trim() && images.length === 0)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
+              aria-label="Send message"
+              title="Send"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>

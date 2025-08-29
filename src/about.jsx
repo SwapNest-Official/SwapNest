@@ -141,7 +141,7 @@ export default function AboutUs() {
                 Meet Our Co-founders
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                The brilliant minds behind CollegeFair who turned a vision into reality
+                The brilliant minds behind SwapNest who turned a vision into reality
               </p>
             </div>
 
@@ -161,9 +161,6 @@ export default function AboutUs() {
                       <h3 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors">
                         Anmol Sinha
                       </h3>
-                      <p className="text-lg text-gray-700 font-medium mb-2">
-                        B.Tech from IIIT Allahabad
-                      </p>
                       <p className="text-blue-600 font-semibold text-lg">
                         Upcoming Product Engineer at UnifyApps
                       </p>
@@ -187,9 +184,6 @@ export default function AboutUs() {
                       <h3 className="text-3xl font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors">
                         Anmol Gupta
                       </h3>
-                      <p className="text-lg text-gray-700 font-medium mb-2">
-                        B.Tech from PEC Chandigarh
-                      </p>
                       <p className="text-emerald-600 font-semibold text-lg">
                         Upcoming Software Engineer at PhonePe
                       </p>
