@@ -88,7 +88,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }, [messages.length, chatId, currentUser])
   
-
+// console.log(messages)
   
   // Load chat info
   useEffect(() => {
@@ -530,7 +530,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                       onClick={() => window.open(message.content, "_blank")}
                     />
                   ) : (
-                    <p className="text-sm">{message.text}</p>
+                    <p className="text-sm">{message.content}</p>
                   )}
                   
                   <div className={`text-xs mt-1 ${
