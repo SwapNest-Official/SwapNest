@@ -87,7 +87,9 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       return () => clearTimeout(markAsReadDebounced)
     }
   }, [messages.length, chatId, currentUser])
+  
 
+  
   // Load chat info
   useEffect(() => {
     const loadChatInfo = async () => {
@@ -351,14 +353,14 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       // You could add error handling here, like showing an error toast
     }
   }
-
+   
   const getOtherUserName = () => {
     if (!chatInfo || !currentUser) return ""
     
     // If we already have the names in chatInfo, use them
-    if (currentUser.uid === chatInfo.buyerId && chatInfo.sellerName) {
+    if (currentUser.uid === chatInfo.buyerId && chatInfo.sellerName != null) {
       return chatInfo.sellerName
-    } else if (currentUser.uid === chatInfo.sellerId && chatInfo.buyerName) {
+    } else if (currentUser.uid === chatInfo.sellerId && chatInfo.buyerName != null) {
       return chatInfo.buyerName
     }
     
@@ -466,14 +468,14 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                 getAvatarColor(chatInfo?.otherUserName || "Unknown")
               }`}
             >
-              {getInitials(chatInfo?.otherUserName || "Unknown")}
+              {getInitials(otherUserName || "Unknown")}
             </div>
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white">
-                {chatInfo?.otherUserName || "Loading..."}
+                {otherUserName || "Loading..."}
               </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {chatInfo?.productName || "Product discussion"}
+                {chatInfo?.productTitle || "Product discussion"}
               </p>
             </div>
           </div>
@@ -528,7 +530,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                       onClick={() => window.open(message.content, "_blank")}
                     />
                   ) : (
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm">{message.text}</p>
                   )}
                   
                   <div className={`text-xs mt-1 ${
