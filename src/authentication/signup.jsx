@@ -26,16 +26,7 @@ const SignupPage = () => {
   // Your exact handleSignup function - unchanged
   async function handleSignup(e) {
     e.preventDefault()
-    setError("")
-    setloading(true)
-    let Email = userCredentials.email
-    Email = Email.slice(-10)
-    // console.log(Email);
-    if (Email != "pec.edu.in") {
-      setloading(false)
-      setError("Please Register with college e-mail id only")
-      return
-    }
+   
 
     try {
       
@@ -169,17 +160,14 @@ const SignupPage = () => {
                       id="email"
                       name="email"
                       type="email"
-                      placeholder="PEC email ID"
+                      placeholder="E-mail ID"
 
                       onChange={handleChange}
                       required
                       className="pl-10 h-11 border-gray-200 focus:border-purple-500 focus:ring-purple-500"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 flex items-center">
-                    <Shield className="w-3 h-3 mr-1" />
-                    Only PEC email addresses are accepted
-                  </p>
+                
                 </div>
 
                 <div className="space-y-2">

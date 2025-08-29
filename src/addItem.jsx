@@ -141,6 +141,7 @@ export default function ListingPage() {
   }
 
   // Handle form submission
+//  console.log(images[0]);
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true);
@@ -151,7 +152,7 @@ export default function ListingPage() {
       }
       return acc
     }, {})
-
+  
     try {
       await addDoc(collection(db, "items"), {
         ...formData,
