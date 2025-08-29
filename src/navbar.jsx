@@ -120,8 +120,8 @@ const Navbar = () => {
               to="/"
               aria-label="UniBay Home"
             >
-              <span className="text-purple-600">Uni</span>
-              <span className="text-gray-800 dark:text-gray-200">Bay</span>
+              <span className="text-purple-600">Swap</span>
+              <span className="text-gray-800 dark:text-gray-200">Nest</span>
             </NavLink>
           </div>
 

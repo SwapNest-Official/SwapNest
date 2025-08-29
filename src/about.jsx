@@ -65,12 +65,12 @@ export default function AboutUs() {
           <div className="max-w-5xl mx-auto text-center">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm font-medium mb-8">
               <span className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full mr-2"></span>
-              Welcome to UniBay
+              Welcome to SwapNest
             </div>
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-gray-900 dark:text-white mb-8 leading-tight">
               Redefining College Life through{" "}
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                UniBay
+                SwapNest
               </span>
             </h1>
             <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 mb-12 leading-relaxed max-w-4xl mx-auto">
@@ -118,7 +118,11 @@ export default function AboutUs() {
               <div className="relative">
                 <div className="w-full h-96 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl transform rotate-3 hover:rotate-0 transition-all duration-500"></div>
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl transform -rotate-3 hover:rotate-0 transition-all duration-500"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-500"></div>
+               <img
+    src="/src/assets/logo.jpg"
+    alt="SwapNest"
+    className="absolute inset-0 w-full h-full object-cover rounded-3xl shadow-2xl hover:scale-105 transition-all duration-500"
+  />
               </div>
             </div>
           </div>
