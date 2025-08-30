@@ -1,6 +1,6 @@
 ---
 name: 💡 Feature Request
-about: Suggest an idea for UniBay
+about: Suggest an idea for SwapNest
 title: '[FEATURE] '
 labels: ['enhancement', 'needs-triage']
 assignees: ''

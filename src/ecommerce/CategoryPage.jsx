@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import Navbar from '../navbar';
 import { useTheme } from '../contexts/ThemeContext';
 import { getAuth, onAuthStateChanged } from "firebase/auth"
@@ -25,7 +26,8 @@ export default function CategoryPage() {
   const [filters, setFilters] = useState({
     condition: '',
     priceRange: '',
-    location: ''
+    location: '',
+    college: ''
   });
   const [currentUser, setCurrentUser] = useState(null)
   const [loadedProducts, setLoadedProducts] = useState([]);
@@ -143,10 +145,14 @@ export default function CategoryPage() {
     }
   };
 
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         product.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCollege = !filters.college || !filters.college.trim() || 
+                          (product.college && product.college.toLowerCase().includes(filters.college.toLowerCase()));
+    
+    return matchesSearch && matchesCollege;
+  });
 
   const sortedProducts = sortProducts(filteredProducts, sortBy);
 
@@ -182,7 +188,7 @@ export default function CategoryPage() {
         {/* Search and Filters */}
         <div className={`mb-8 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -222,6 +228,17 @@ export default function CategoryPage() {
                   <SelectItem value="10000+">Above ₹10,000</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* College Filter */}
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Filter by college..."
+                  value={filters.college}
+                  onChange={(e) => setFilters(prev => ({ ...prev, college: e.target.value }))}
+                  className="w-full px-3 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
 
               {/* Sort */}
               <Select value={sortBy} onValueChange={setSortBy}>
@@ -352,15 +369,25 @@ export default function CategoryPage() {
                           {product.location}
                         </span>
                       </div>
+
+                      {/* College Information */}
+                      {product.college && (
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-4 h-4 bg-purple-500 rounded-full"></div>
+                          <span className="text-sm text-gray-600 dark:text-gray-300">
+                            {product.college}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          ₹{product.price.toLocaleString()}
+                          ₹{(product.price || 0).toLocaleString()}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 line-through">
-                          ₹{product.originalPrice.toLocaleString()}
+                          ₹{(product.originalPrice || 0).toLocaleString()}
                         </div>
                       </div>
                       

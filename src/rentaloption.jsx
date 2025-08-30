@@ -228,7 +228,7 @@ export default function RentalOptions({ listing }) {
           <div className="p-4 space-y-3">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Daily Rate:</span>
-              <span className="font-medium">₹{listing.rentAmount}/day</span>
+              <span className="font-medium">₹{listing.rentAmount || 0}/day</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Number of Days:</span>
@@ -237,7 +237,7 @@ export default function RentalOptions({ listing }) {
             <Separator className="my-2" />
             <div className="flex justify-between text-base font-semibold text-blue-700">
               <span>Total Rental Cost:</span>
-              <span>₹{totalRentalCost}</span>
+              <span>₹{totalRentalCost || 0}</span>
             </div>
           </div>
         </div>
@@ -248,7 +248,7 @@ export default function RentalOptions({ listing }) {
             <Shield className="h-5 w-5 text-amber-500 mt-0.5" />
             <div>
               <h4 className="font-medium text-amber-800 mb-1">Security Deposit</h4>
-              <p className="text-amber-700 font-medium">₹{listing.securityDeposit}</p>
+              <p className="text-amber-700 font-medium">₹{listing.securityDeposit || 0}</p>
               <p className="text-xs text-amber-600 mt-1">
                 Fully refundable upon return in original condition as per the damage policy.
               </p>

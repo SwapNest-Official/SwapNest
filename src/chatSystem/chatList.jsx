@@ -200,9 +200,9 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Messages</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">Chat with buyers and sellers</p>
+      <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Messages</h1>
+        <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">Chat with buyers and sellers</p>
         
         {/* Search Bar */}
         <div className="relative">
@@ -212,7 +212,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-3 sm:pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
           />
         </div>
       </div>
@@ -230,7 +230,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
             <p className="text-gray-400 dark:text-gray-500 text-xs">Start chatting when you buy or sell items</p>
           </div>
         ) : (
-          <div className="space-y-1 p-2">
+          <div className="space-y-1 p-1 sm:p-2">
             {chats
               .filter((chat) => {
                 if (!searchQuery) return true
@@ -247,16 +247,16 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
                   <div
                     key={chat.id}
                     onClick={() => onChatSelect(chat.id)}
-                    className={`group cursor-pointer p-3 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 ${
+                    className={`group cursor-pointer p-2 sm:p-3 rounded-lg transition-all duration-200 hover:bg-gray-50 dark:hover:bg-gray-700 touch-manipulation ${
                       selectedChatId === chat.id
                         ? "bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500"
                         : "hover:border-l-2 hover:border-gray-300 dark:hover:border-gray-600"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       {/* Avatar */}
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 ${
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0 ${
                           getAvatarColor(otherUserName || "Unknown")
                         }`}
                       >
@@ -266,7 +266,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
                       {/* Chat Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                          <h3 className="font-medium text-gray-900 dark:text-white truncate text-sm sm:text-base">
                             {otherUserName || "Unknown User"}
                           </h3>
                           <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
@@ -275,7 +275,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
                         </div>
                         
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate flex-1">
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate flex-1">
                             {chat.lastMessage || "No messages yet"}
                           </p>
                           
@@ -301,8 +301,8 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+        <p className="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
           {chats.length} conversation{chats.length !== 1 ? 's' : ''}
         </p>
       </div>

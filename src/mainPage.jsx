@@ -106,7 +106,7 @@ const MainPage = () => {
                 <div className={`text-center mb-16 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
                     <div className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 text-blue-800 dark:text-blue-200 text-lg font-medium mb-8 animate-pulse">
                         <span className="w-3 h-3 bg-blue-600 dark:bg-blue-400 rounded-full mr-3 animate-bounce"></span>
-                        Welcome to UniBay
+                        Welcome to SwapNest
                     </div>
                     
                     <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">

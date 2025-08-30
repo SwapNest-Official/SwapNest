@@ -87,7 +87,7 @@ app.get('/api/health', async (req, res) => {
         const redisStatus = await redisHealthCheck();
         res.json({ 
             status: 'OK', 
-            message: 'UniBay API is running',
+            message: 'SwapNest API is running',
             timestamp: new Date().toISOString(),
             redis: redisStatus ? 'Connected' : 'Disconnected',
             environment: process.env.NODE_ENV,

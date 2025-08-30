@@ -1,4 +1,4 @@
-# 🏫 UniBay - Campus Marketplace
+# 🏫 SwapNest - Campus Marketplace
 
 A modern, responsive campus marketplace platform built with React, Firebase, and Tailwind CSS. Connect students to buy, sell, rent, or donate items within their campus community.
 
@@ -264,4 +264,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for the campus community**
 
-*UniBay - Where campus commerce meets modern technology*
+*SwapNest - Where campus commerce meets modern technology*

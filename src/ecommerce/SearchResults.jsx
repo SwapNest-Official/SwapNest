@@ -156,9 +156,9 @@ const SearchResults = () => {
                 
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <span className="text-2xl font-bold text-purple-400">₹{product.price.toLocaleString()}</span>
-                    {product.originalPrice > product.price && (
-                      <span className="text-gray-400 line-through ml-2">₹{product.originalPrice.toLocaleString()}</span>
+                    <span className="text-2xl font-bold text-purple-400">₹{(product.price || 0).toLocaleString()}</span>
+                    {(product.originalPrice || 0) > (product.price || 0) && (
+                      <span className="text-gray-400 line-through ml-2">₹{(product.originalPrice || 0).toLocaleString()}</span>
                     )}
                   </div>
                 </div>

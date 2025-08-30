@@ -79,6 +79,11 @@ router.get('/', async (req, res) => {
       query.location = { $regex: req.query.location, $options: 'i' };
     }
     
+    // College filter
+    if (req.query.college) {
+      query.college = { $regex: req.query.college, $options: 'i' };
+    }
+    
     // Search query
     if (req.query.search) {
       query.$text = { $search: req.query.search };
@@ -165,6 +170,7 @@ router.post('/', protect, upload.array('images', 5), async (req, res) => {
       brand,
       condition,
       location,
+      college,
       tags,
       features,
       specifications,
@@ -173,6 +179,13 @@ router.post('/', protect, upload.array('images', 5), async (req, res) => {
 
     // Handle uploaded images
     const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+    
+    // Validate that at least one image is uploaded
+    if (images.length === 0) {
+      return res.status(400).json({ 
+        error: 'At least one image is required' 
+      });
+    }
 
     const product = await Product.create({
       name,
@@ -186,6 +199,7 @@ router.post('/', protect, upload.array('images', 5), async (req, res) => {
       images,
       seller: req.user.id,
       location,
+      college,
       tags: tags ? JSON.parse(tags) : [],
       features: features ? JSON.parse(features) : [],
       specifications: specifications ? JSON.parse(specifications) : {},
@@ -228,6 +242,13 @@ router.put('/:id', protect, upload.array('images', 5), async (req, res) => {
     if (req.files && req.files.length > 0) {
       const newImages = req.files.map(file => `/uploads/${file.filename}`);
       updateData.images = [...product.images, ...newImages];
+    }
+    
+    // Ensure at least one image exists (either existing or new)
+    if (!updateData.images || updateData.images.length === 0) {
+      return res.status(400).json({ 
+        error: 'At least one image is required' 
+      });
     }
 
     // Parse JSON fields

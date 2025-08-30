@@ -13,7 +13,7 @@ export const useTheme = () => {
 export const ThemeProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check localStorage first, then system preference
-    const saved = localStorage.getItem('unibay-theme');
+    const saved = localStorage.getItem('swapnest-theme');
     if (saved !== null) {
       return saved === 'dark';
     }
@@ -22,7 +22,7 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     // Update localStorage and document class when theme changes
-    localStorage.setItem('unibay-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('swapnest-theme', isDarkMode ? 'dark' : 'light');
     
     if (isDarkMode) {
       document.documentElement.classList.add('dark');

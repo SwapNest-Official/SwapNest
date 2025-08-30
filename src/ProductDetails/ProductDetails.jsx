@@ -154,7 +154,7 @@ export default function ListingPage() {
           {/* Main content grid - Maintaining original order on all screen sizes */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Left column: Images and tabs - Always first in order */}
-            <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8 w-full">
               {/* Image section */}
               <div className="space-y-3 sm:space-y-4">
                 {/* Main image with click to zoom */}
@@ -203,41 +203,44 @@ export default function ListingPage() {
               
 
               {/* Information tabs */}
-              <div>
-                <Tabs
-                  defaultValue="description"
-                  className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700"
-                >
-                  <TabsList className="grid w-full grid-cols-3 bg-gray-50 dark:bg-gray-700 rounded-lg p-1">
+              <div className="space-y-2 w-full">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Product Information</h3>
+                </div>
+                                 <Tabs
+                   defaultValue="description"
+                   className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden"
+                 >
+                                     <TabsList className="grid w-full grid-cols-3 gap-2 my-3">
                     <TabsTrigger
                       value="description"
-                      className="text-xs sm:text-sm py-2 sm:py-3 rounded-md transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm dark:text-gray-300"
+                      className="text-sm sm:text-base font-medium py-3 sm:py-4 px-4 rounded-lg transition-all duration-300 data-[state=active]:bg-purple-100 dark:data-[state=active]:bg-purple-900/30 data-[state=active]:text-purple-800 dark:data-[state=active]:text-purple-300 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-purple-300 dark:data-[state=active]:border-purple-600 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                     >
                       Description
                     </TabsTrigger>
                     <TabsTrigger
                       value="details"
-                      className="text-xs sm:text-sm py-2 sm:py-3 rounded-md transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm dark:text-gray-300"
+                      className="text-sm sm:text-base font-medium py-3 sm:py-4 px-4 rounded-lg transition-all duration-300 data-[state=active]:bg-purple-100 dark:data-[state=active]:bg-purple-900/30 data-[state=active]:text-purple-800 dark:data-[state=active]:text-purple-300 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-purple-300 dark:data-[state=active]:border-purple-600 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                     >
                       Details
                     </TabsTrigger>
                     <TabsTrigger
                       value="seller"
-                      className="text-xs sm:text-sm py-2 sm:py-3 rounded-md transition-all duration-300 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800 data-[state=active]:shadow-sm dark:text-gray-300"
+                      className="text-sm sm:text-base font-medium py-3 sm:py-4 px-4 rounded-lg transition-all duration-300 data-[state=active]:bg-purple-100 dark:data-[state=active]:bg-purple-900/30 data-[state=active]:text-purple-800 dark:data-[state=active]:text-purple-300 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-purple-300 dark:data-[state=active]:border-purple-600 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20"
                     >
                       Seller
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="description" className="pt-4 sm:pt-6">
+                  <TabsContent value="description" className="pt-6 sm:pt-8 animate-in fade-in-0 slide-in-from-top-2 duration-300 w-full">
                     <DescriptionTab listing={listing} />
                   </TabsContent>
 
-                  <TabsContent value="details" className="pt-4 sm:pt-6">
+                  <TabsContent value="details" className="pt-6 sm:pt-8 animate-in fade-in-0 slide-in-from-top-2 duration-300 w-full">
                     <DetailsTab listing={listing} />
                   </TabsContent>
 
-                  <TabsContent value="seller" className="pt-4 sm:pt-6">
+                  <TabsContent value="seller" className="pt-6 sm:pt-8 animate-in fade-in-0 slide-in-from-top-2 duration-300 w-full">
                     <SellerDetails listing={listing} />
                   </TabsContent>
                 </Tabs>

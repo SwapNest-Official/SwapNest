@@ -43,7 +43,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
   const navigate = useNavigate()
 
   // Mark chat as read when component mounts and when new messages arrive
-  //console.log(productLink);
   useEffect(() => {
     const markChatAsRead = async (chatId, userId) => {
       try {
@@ -56,12 +55,14 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           { merge: true },
         )
         hasMarkedAsRead.current = true
+        console.log("Chat marked as read for user:", userId)
       } catch (error) {
         console.error("Error marking chat as read:", error)
       }
     }
 
     if (chatId && currentUser?.uid) {
+      // Mark as read immediately when chat is opened
       markChatAsRead(chatId, currentUser.uid)
     }
   }, [chatId, currentUser])
@@ -136,6 +137,26 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       setMessages(messageList)
       setLoading(false)
       
+      // Mark as read when messages are loaded
+      if (messageList.length > 0 && currentUser?.uid && hasMarkedAsRead.current) {
+        const markAsRead = async () => {
+          try {
+            const readRef = doc(db, "chats", chatId, "readStatus", currentUser.uid)
+            await setDoc(
+              readRef,
+              {
+                lastReadAt: serverTimestamp(),
+              },
+              { merge: true },
+            )
+            console.log("Chat marked as read after loading messages")
+          } catch (error) {
+            console.error("Error updating read status after loading messages:", error)
+          }
+        }
+        markAsRead()
+      }
+      
       // Scroll to bottom after messages load
       setTimeout(() => {
         if (messagesEndRef.current) {
@@ -148,7 +169,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     })
 
     return () => unsubscribe()
-  }, [chatId])
+  }, [chatId, currentUser])
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -353,7 +374,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
   }
 
   const getOtherUserName = () => {
-    if (!chatInfo || !currentUser) return ""
+    if (!chatInfo || !currentUser) return "Unknown User"
     
     // If we already have the names in chatInfo, use them
     if (currentUser.uid === chatInfo.buyerId && chatInfo.sellerName) {
@@ -363,7 +384,13 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
     
     // If names are missing, try to fetch them
-    return "Loading..."
+    if (currentUser.uid === chatInfo.buyerId && chatInfo.sellerId) {
+      return "Loading..."
+    } else if (currentUser.uid === chatInfo.sellerId && chatInfo.buyerId) {
+      return "Loading..."
+    }
+    
+    return "Unknown User"
   }
 
   const getId = ()=>{
@@ -447,32 +474,32 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-800">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center gap-2 sm:gap-3">
           {onBackClick && (
             <button
               onClick={onBackClick}
-              className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 sm:p-2.5 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors touch-manipulation"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           )}
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
-                getAvatarColor(chatInfo?.otherUserName || "Unknown")
+              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm ${
+                getAvatarColor(otherUserName || "Unknown")
               }`}
             >
-              {getInitials(chatInfo?.otherUserName || "Unknown")}
+              {getInitials(otherUserName || "Unknown")}
             </div>
-            <div>
-              <h2 className="font-semibold text-gray-900 dark:text-white">
-                {chatInfo?.otherUserName || "Loading..."}
+            <div className="min-w-0 flex-1">
+              <h2 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base truncate">
+                {otherUserName || "Loading..."}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
                 {chatInfo?.productName || "Product discussion"}
               </p>
             </div>
@@ -491,7 +518,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-4 bg-gray-50 dark:bg-gray-900">
         {loading ? (
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
@@ -514,7 +541,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                 className={`flex ${message.senderId === currentUser?.uid ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  className={`max-w-[75vw] sm:max-w-xs lg:max-w-md px-3 py-2 sm:px-4 sm:py-2 rounded-lg ${
                     message.senderId === currentUser?.uid
                       ? "bg-blue-600 text-white"
                       : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
@@ -547,8 +574,8 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center gap-3">
+      <div className="p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Image Upload Button */}
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -576,7 +603,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type your message..."
-            className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-3 py-2 sm:px-4 sm:py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
             disabled={uploading}
           />
 

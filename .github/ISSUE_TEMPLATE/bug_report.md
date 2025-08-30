@@ -1,6 +1,6 @@
 ---
 name: 🐛 Bug Report
-about: Create a report to help us improve UniBay
+about: Create a report to help us improve SwapNest
 title: '[BUG] '
 labels: ['bug', 'needs-triage']
 assignees: ''

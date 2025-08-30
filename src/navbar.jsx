@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { NavLink, useNavigate, useLocation } from "react-router-dom"
-import { Store, Menu, X, User, ChevronDown, MessageCircle, Sun, Moon, FileText, Heart, LogOut } from "lucide-react"
+import { Store, Menu, X, User, ChevronDown, MessageCircle, Sun, Moon, FileText, Heart, LogOut, Home, ShoppingBag } from "lucide-react"
 import { auth } from "./firebase/config"
 import { signOut } from "firebase/auth"
 import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore"
@@ -70,13 +70,14 @@ const Navbar = () => {
                     count++
                   }
                 } else {
-                  // No read status means unread
-                  count++
+                  // Only count as unread if there's actually a last message
+                  if (chatData.lastMessage && chatData.lastMessage.trim() !== "") {
+                    count++
+                  }
                 }
               } catch (error) {
                 console.error("Error checking read status:", error)
-                // If there's an error, assume unread
-                count++
+                // Don't count as unread on error to avoid false positives
               }
             }
           }
@@ -118,28 +119,29 @@ const Navbar = () => {
             <NavLink
               className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white tracking-tight flex items-center transition-colors duration-200"
               to="/"
-              aria-label="UniBay Home"
+              aria-label="SwapNest Home"
             >
-              <span className="text-purple-600">Uni</span>
-              <span className="text-gray-800 dark:text-gray-200">Bay</span>
+              <span className="text-purple-600">Swap</span>
+              <span className="text-gray-800 dark:text-gray-200">Nest</span>
             </NavLink>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center justify-between flex-1 ml-10">
-            <div className="flex space-x-1">
-              <NavLink
-                className={({ isActive }) =>
-                  `px-3 py-2 rounded text-sm font-medium transition-colors duration-200 ${
-                    isActive 
-                      ? "text-purple-600 dark:text-purple-400" 
-                      : "text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
-                  }`
-                }
-                to="/"
-              >
-                Home
-              </NavLink>
+                         <div className="flex space-x-1">
+               <NavLink
+                 className={({ isActive }) =>
+                   `px-3 py-2 rounded text-sm font-medium transition-colors duration-200 flex items-center gap-2 ${
+                     isActive 
+                       ? "text-purple-600 dark:text-purple-400" 
+                       : "text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
+                   }`
+                 }
+                 to="/"
+               >
+                 <Home size={16} />
+                 Home
+               </NavLink>
               <NavLink
                 className={({ isActive }) =>
                   `px-3 py-2 rounded text-sm font-medium transition-colors duration-200 ${
@@ -172,13 +174,13 @@ const Navbar = () => {
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 border border-gray-200 dark:border-gray-600 hover:scale-110 active:scale-95"
                 aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
               >
                 {isDarkMode ? (
-                  <Sun className="h-5 w-5" />
+                  <Sun className="h-5 w-5 transition-transform duration-200 hover:rotate-12" />
                 ) : (
-                  <Moon className="h-5 w-5" />
+                  <Moon className="h-5 w-5 transition-transform duration-200 hover:rotate-12" />
                 )}
               </button>
 
@@ -283,6 +285,28 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="flex items-center space-x-3 lg:hidden">
+            {/* Home Icon for Mobile */}
+            <NavLink
+              to="/"
+              className="p-1.5 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+              aria-label="Home"
+            >
+              <Home size={18} />
+            </NavLink>
+
+            {/* Theme Toggle for Mobile */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 border border-gray-200 dark:border-gray-600 hover:scale-110 active:scale-95"
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDarkMode ? (
+                <Sun className="h-5 w-5 transition-transform duration-200 hover:rotate-12" />
+              ) : (
+                <Moon className="h-5 w-5 transition-transform duration-200 hover:rotate-12" />
+              )}
+            </button>
+
             {currentUser && (
               <>
                 <NavLink
@@ -298,13 +322,13 @@ const Navbar = () => {
                     </span>
                   )}
                 </NavLink>
-                <NavLink
-                  to="/profile"
-                  className="p-1.5 text-gray-700 rounded hover:bg-gray-50"
-                  aria-label="Your profile"
-                >
-                  <User size={18} />
-                </NavLink>
+                                 <NavLink
+                   to="/addItem"
+                   className="p-1.5 text-gray-700 rounded hover:bg-gray-50"
+                   aria-label="Sell Item"
+                 >
+                   <ShoppingBag size={18} />
+                 </NavLink>
               </>
             )}
 
@@ -320,117 +344,140 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="lg:hidden bg-white border-t border-gray-100">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            <NavLink
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded text-base font-medium ${
-                  isActive ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
-                }`
-              }
-              to="/"
-            >
-              Home
-            </NavLink>
-            <NavLink
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded text-base font-medium ${
-                  isActive ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
-                }`
-              }
-              to="/categories"
-            >
-              Categories
-            </NavLink>
-
-            <NavLink
-              className={({ isActive }) =>
-                `block px-3 py-2 rounded text-base font-medium ${
-                  isActive ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
-                }`
-              }
-              to="/about"
-            >
-              About
-            </NavLink>
-            {currentUser && (
-              <NavLink
+             {/* Mobile Menu */}
+       {isOpen && (
+         <div className="lg:hidden bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
+           <div className="px-2 pt-2 pb-3 space-y-1">
+                          <NavLink
                 className={({ isActive }) =>
-                  `block px-3 py-2 rounded text-base font-medium ${
-                    isActive ? "text-purple-600" : "text-gray-700 hover:text-purple-600"
+                  `block px-3 py-2 rounded text-base font-medium flex items-center gap-2 ${
+                    isActive ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
                   }`
                 }
-                to="/chating"
+                to="/"
               >
-                <div className="flex items-center justify-between">
-                  <span>Messages</span>
-                  {unreadCount > 0 && (
-                    <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
-                </div>
+                <Home size={18} />
+                Home
               </NavLink>
-            )}
-          </div>
+             <NavLink
+               className={({ isActive }) =>
+                 `block px-3 py-2 rounded text-base font-medium ${
+                   isActive ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
+                 }`
+               }
+               to="/categories"
+             >
+               Categories
+             </NavLink>
 
-          <div className="px-4 py-3 border-t border-gray-100">
-            {currentUser ? (
-              <div className="space-y-1">
-                <NavLink
-                  to="/profile"
-                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                >
-                  My Profile
-                </NavLink>
-                <NavLink
-                  to="/removeItem"
-                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                >
-                  My Listings
-                </NavLink>
-                <NavLink
-                  to="/favorites"
-                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
-                >
-                  My Favorites
-                </NavLink>
-                <div className="border-t border-gray-100 my-1"></div>
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-3 py-2 rounded text-base font-medium text-red-600 hover:bg-red-50"
-                >
-                  Sign Out
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col space-y-2">
-                <NavLink
-                  to="/login"
-                  className="block px-3 py-2 rounded text-base font-medium text-gray-700 hover:text-purple-600"
-                >
-                  Sign In
-                </NavLink>
-                <NavLink
-                  to="/signup"
-                  className="block px-3 py-2 rounded text-base font-medium text-white bg-gray-800 hover:bg-gray-700"
-                >
-                  Register
-                </NavLink>
-              </div>
-            )}
+             <NavLink
+               className={({ isActive }) =>
+                 `block px-3 py-2 rounded text-base font-medium ${
+                   isActive ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
+                 }`
+               }
+               to="/about"
+             >
+               About
+             </NavLink>
+             {currentUser && (
+               <NavLink
+                 className={({ isActive }) =>
+                   `block px-3 py-2 rounded text-base font-medium ${
+                     isActive ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
+                   }`
+                 }
+                 to="/chating"
+               >
+                 <div className="flex items-center justify-between">
+                   <span>Messages</span>
+                   {unreadCount > 0 && (
+                     <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                       {unreadCount > 99 ? '99+' : unreadCount}
+                     </span>
+                   )}
+                 </div>
+               </NavLink>
+             )}
+           </div>
 
-            <NavLink
-              to="/addItem"
-              className="mt-3 block w-full px-4 py-3 rounded-lg text-center text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-lg transition-all duration-200"
-            >
-              <Store size={16} className="inline-block mr-2" /> Sell Your Items
-            </NavLink>
-          </div>
-        </div>
-      )}
+           <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+             {/* Theme Toggle in Mobile Menu */}
+             <div className="flex items-center justify-between px-3 py-2 mb-3">
+               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Theme</span>
+               <button
+                 onClick={toggleTheme}
+                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+                 aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+               >
+                 {isDarkMode ? (
+                   <>
+                     <Sun className="h-4 w-4" />
+                     <span>Light Mode</span>
+                   </>
+                 ) : (
+                   <>
+                     <Moon className="h-4 w-4" />
+                     <span>Dark Mode</span>
+                   </>
+                 )}
+               </button>
+             </div>
+
+             {currentUser ? (
+               <div className="space-y-1">
+                 <NavLink
+                   to="/profile"
+                   className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                 >
+                   My Profile
+                 </NavLink>
+                 <NavLink
+                   to="/removeItem"
+                   className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                 >
+                   My Listings
+                 </NavLink>
+                 <NavLink
+                   to="/favorites"
+                   className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                 >
+                   My Favorites
+                 </NavLink>
+                 <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                 <button
+                   onClick={handleLogout}
+                   className="block w-full text-left px-3 py-2 rounded text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                 >
+                   Sign Out
+                 </button>
+               </div>
+             ) : (
+               <div className="flex flex-col space-y-2">
+                 <NavLink
+                   to="/login"
+                   className="block px-3 py-2 rounded text-base font-medium text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"
+                 >
+                   Sign In
+                 </NavLink>
+                 <NavLink
+                   to="/signup"
+                   className="block px-3 py-2 rounded text-base font-medium text-white bg-gray-800 dark:bg-gray-700 hover:bg-gray-700 dark:hover:bg-gray-600"
+                 >
+                   Register
+                 </NavLink>
+               </div>
+             )}
+
+             <NavLink
+               to="/addItem"
+               className="mt-3 block w-full px-4 py-3 rounded-lg text-center text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-lg transition-all duration-200"
+             >
+               <Store size={16} className="inline-block mr-2" /> Sell Your Items
+             </NavLink>
+           </div>
+         </div>
+       )}
 
       {/* Mobile Chat Dropdown */}
       {isChatOpen && (

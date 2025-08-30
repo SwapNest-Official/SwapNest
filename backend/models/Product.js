@@ -52,6 +52,12 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Location is required']
   },
+  college: {
+    type: String,
+    required: [true, 'College name is required'],
+    trim: true,
+    maxlength: [200, 'College name cannot exceed 200 characters']
+  },
   availability: {
     type: String,
     enum: ['Available', 'Sold', 'Reserved'],
