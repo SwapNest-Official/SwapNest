@@ -620,15 +620,17 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             </svg>
           </button>
 
-          {/* Message Input */}
+          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            multiple
             onChange={handleImageUpload}
             className="hidden"
           />
-          
+
+          {/* Message Input */}
           <input
             type="text"
             value={input}
@@ -639,45 +641,23 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             disabled={uploading}
           />
 
-            {/* Hidden file input (now allows multiple) */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-
-            {/* Message Input */}
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={isUploading}
-            />
-
-            {/* Send Button */}
-            <button
-              onClick={handleSendMessage}
-              disabled={isUploading || (!input.trim() && images.length === 0)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
-              aria-label="Send message"
-              title="Send"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
-            </button>
-          </div>
+          {/* Send Button */}
+          <button
+            onClick={handleSendMessage}
+            disabled={uploading || (!input.trim() && images.length === 0)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 dark:disabled:bg-gray-600 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
+            aria-label="Send message"
+            title="Send"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
