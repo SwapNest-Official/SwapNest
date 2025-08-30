@@ -101,7 +101,7 @@ const LoginPage = () => {
               className="bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 border-purple-200"
             >
               <Sparkles className="w-3 h-3 mr-1" />
-              Welcome Back to CollegeFair
+              Welcome Back to SwapNest
             </Badge>
             <h1 className="text-4xl xl:text-5xl font-bold bg-gradient-to-r from-gray-900 via-purple-900 to-indigo-900 bg-clip-text text-transparent leading-tight">
               Continue Your Journey
