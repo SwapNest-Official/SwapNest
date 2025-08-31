@@ -16,7 +16,7 @@ function ShareButton({ className, profileName, profileUrl }) {
         await navigator.clipboard.writeText(shareUrl)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
-        console.log("Link copied to clipboard:", shareUrl)
+        alert("Link copied to clipboard:", shareUrl)
       } else {
         // Fallback for older browsers
         const textArea = document.createElement("textarea")
@@ -31,7 +31,7 @@ function ShareButton({ className, profileName, profileUrl }) {
         textArea.remove()
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
-        console.log("Link copied to clipboard (fallback):", shareUrl)
+        alert("Link copied to clipboard:", shareUrl)
       }
     } catch (error) {
       console.error("Failed to copy link:", error)
