@@ -55,7 +55,12 @@ router.get('/', async (req, res) => {
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
 
-    let query = { isActive: true };
+    let query = { 
+      isActive: true,
+      sold: { $ne: true },
+      status: { $ne: "sold" },
+      removedFromMarketplace: { $ne: true }
+    };
     
     // Category filter
     if (req.query.category) {

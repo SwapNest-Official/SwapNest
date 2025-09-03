@@ -482,7 +482,7 @@ export default function ListingPage() {
                       name="college"
                       value={formData.college}
                       onChange={handleChange}
-                      placeholder="e.g., IIIT Allahabad, IIT Bombay, Delhi University"
+                      placeholder="e.g. Delhi University"
                       className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     />
                   </div>

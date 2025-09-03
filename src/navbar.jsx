@@ -7,6 +7,7 @@ import { auth } from "./firebase/config"
 import { signOut } from "firebase/auth"
 import { getFirestore, collection, query, where, getDocs, orderBy, onSnapshot, doc, getDoc } from "firebase/firestore"
 import { useTheme } from "./contexts/ThemeContext"
+import { useOffersCount } from "./contexts/OffersCountContext"
 
 const db = getFirestore()
 
@@ -22,6 +23,7 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { isDarkMode, toggleTheme } = useTheme()
+  const { offersCount, loading: offersLoading } = useOffersCount()
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -171,6 +173,14 @@ const Navbar = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center space-x-4">
+              {/* Offers Count Display */}
+              <div className="flex items-center space-x-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                  {offersLoading ? "..." : `${offersCount} Offers`}
+                </span>
+              </div>
+
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
@@ -348,7 +358,15 @@ const Navbar = () => {
        {isOpen && (
          <div className="lg:hidden bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
            <div className="px-2 pt-2 pb-3 space-y-1">
-                          <NavLink
+             {/* Offers Count for Mobile */}
+             <div className="flex items-center justify-center px-3 py-2 mb-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+               <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                 {offersLoading ? "Loading..." : `${offersCount} Successful Offers`}
+               </span>
+             </div>
+
+             <NavLink
                 className={({ isActive }) =>
                   `block px-3 py-2 rounded text-base font-medium flex items-center gap-2 ${
                     isActive ? "text-purple-600 dark:text-purple-400" : "text-gray-700 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400"

@@ -19,6 +19,7 @@ import ChatRoom from './chatSystem/chatRoom';
 import ReactGA from 'react-ga4';
 import ChatInterface from './chatSystem/chatInterface';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { OffersCountProvider } from './contexts/OffersCountContext';
 
 // Simple e-commerce components
 import SearchResults from './ecommerce/SearchResults';
@@ -49,7 +50,8 @@ const ProtectedRoute = ({ element }) => {
 const App = () => {
   return (
     <ThemeProvider>
-      <Router>
+      <OffersCountProvider>
+        <Router>
         <Routes>
           {/* Public Routes */}
           <Route path="/signup" element={<SignupPage />} />
@@ -80,8 +82,9 @@ const App = () => {
           {/* Redirect unknown paths */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-      </Router>
-      <Toaster />
+        </Router>
+        <Toaster />
+      </OffersCountProvider>
     </ThemeProvider>
   );
 };

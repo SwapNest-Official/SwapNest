@@ -4,6 +4,7 @@ import { auth } from '../src/firebase/config';
 import { signOut } from 'firebase/auth';
 import Navbar from './navbar';
 import { useTheme } from './contexts/ThemeContext';
+import { useOffersCount } from './contexts/OffersCountContext';
 
 const MainPage = () => {
     const navigate = useNavigate();
@@ -11,6 +12,7 @@ const MainPage = () => {
     const [isVisible, setIsVisible] = useState(false);
     const [loadedCards, setLoadedCards] = useState([]);
     const { isDarkMode } = useTheme();
+    const { offersCount, loading: offersLoading } = useOffersCount();
 
     useEffect(() => {
         setIsVisible(true);
@@ -117,6 +119,16 @@ const MainPage = () => {
                         Buy, sell, rent, or donate items within your campus community. 
                         Connect with fellow students and find amazing deals!
                     </p>
+                    
+                    {/* Offers Count Display */}
+                    <div className="mt-8 flex justify-center">
+                        <div className="inline-flex items-center px-6 py-3 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 border border-green-200 dark:border-green-800">
+                            <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse"></div>
+                            <span className="text-green-800 dark:text-green-200 font-semibold text-lg">
+                                {offersLoading ? "Loading..." : `${offersCount} Successful Offers Made`}
+                            </span>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Navigation Grid */}

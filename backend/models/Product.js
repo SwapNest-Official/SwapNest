@@ -115,6 +115,33 @@ const productSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  sold: {
+    type: Boolean,
+    default: false
+  },
+  status: {
+    type: String,
+    enum: ['available', 'sold', 'reserved'],
+    default: 'available'
+  },
+  soldAt: {
+    type: Date
+  },
+  soldBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  finalPrice: {
+    type: Number,
+    min: [0, 'Final price cannot be negative']
+  },
+  removedFromMarketplace: {
+    type: Boolean,
+    default: false
+  },
+  removedAt: {
+    type: Date
   }
 }, {
   timestamps: true

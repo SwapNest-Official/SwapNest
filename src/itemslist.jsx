@@ -160,14 +160,22 @@ export default function ProductListPage() {
       }
       
       const querySnapshot = await getDocs(collection(db, "items"))
-      const fetchedProducts = querySnapshot.docs.map((doc) => {
-        const data = doc.data()
-        return {
-          id: doc.id,
-          ...data,
-          userId: data.userId || "unknownUser",
-        }
-      })
+      const fetchedProducts = querySnapshot.docs
+        .map((doc) => {
+          const data = doc.data()
+          return {
+            id: doc.id,
+            ...data,
+            userId: data.userId || "unknownUser",
+          }
+        })
+        .filter((product) => {
+          // Filter out sold/removed products
+          return !product.sold && 
+                 product.status !== "sold" && 
+                 !product.removedFromMarketplace &&
+                 product.isActive !== false
+        })
 
       const userIds = [
         ...new Set(
