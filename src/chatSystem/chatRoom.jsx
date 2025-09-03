@@ -34,6 +34,11 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
   //const [productLink,setproductLink] = useState("");
   const [showMarkAsSoldModal, setShowMarkAsSoldModal] = useState(false)
   const [isProductSold, setIsProductSold] = useState(false)
+  const [offerPrice, setOfferPrice] = useState("")
+  const [buyerAccepted, setBuyerAccepted] = useState(false)
+  const [sellerAccepted, setSellerAccepted] = useState(false)
+  const [showOfferModal, setShowOfferModal] = useState(false)
+  const [isFinalizing, setIsFinalizing] = useState(false)
   const { isDarkMode } = useTheme()
 
   const messagesEndRef = useRef(null)
@@ -102,15 +107,26 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           console.log("ChatRoom: Loaded chat data:", chatData)
           setChatInfo(chatData)
 
-          // Check if product is already sold
-          if (chatData.productId) {
-            const productRef = doc(db, "items", chatData.productId)
-            const productSnap = await getDoc(productRef)
-            if (productSnap.exists()) {
-              const productData = productSnap.data()
-              setIsProductSold(productData.sold === true || productData.status === "sold")
-            }
-          }
+                     // Check if product is already sold
+           if (chatData.productId) {
+             const productRef = doc(db, "items", chatData.productId)
+             const productSnap = await getDoc(productRef)
+             if (productSnap.exists()) {
+               const productData = productSnap.data()
+               setIsProductSold(productData.sold === true || productData.status === "sold")
+             }
+           }
+
+           // Load offer status
+           if (chatData.offerPrice) {
+             setOfferPrice(chatData.offerPrice)
+           }
+           if (chatData.buyerAccepted) {
+             setBuyerAccepted(chatData.buyerAccepted)
+           }
+           if (chatData.sellerAccepted) {
+             setSellerAccepted(chatData.sellerAccepted)
+           }
         } else {
           console.error("Chat not found")
         }
@@ -391,6 +407,172 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }
 
+  const proposeOffer = async () => {
+    if (!offerPrice || isNaN(offerPrice) || parseFloat(offerPrice) <= 0) {
+      alert("Please enter a valid offer price")
+      return
+    }
+
+    try {
+      const chatRef = doc(db, "chats", chatId)
+      await updateDoc(chatRef, {
+        offerPrice: parseFloat(offerPrice),
+        buyerAccepted: false,
+        sellerAccepted: false,
+        offerProposedBy: currentUser.uid,
+        offerProposedAt: serverTimestamp(),
+      })
+
+      setShowOfferModal(false)
+      
+      // Send a system message about the offer
+      const systemMessage = {
+        senderId: "system",
+        content: `💰 Offer proposed: ₹${offerPrice}`,
+        timestamp: serverTimestamp(),
+        type: "system",
+        isOfferMessage: true,
+      }
+      
+      await addDoc(collection(db, "chats", chatId, "messages"), systemMessage)
+    } catch (error) {
+      console.error("Error proposing offer:", error)
+    }
+  }
+
+  const acceptOffer = async () => {
+    if (!currentUser || !chatInfo) return
+
+    try {
+      setIsFinalizing(true)
+      const chatRef = doc(db, "chats", chatId)
+      
+      const isBuyer = currentUser.uid === chatInfo.buyerId
+      const isSeller = currentUser.uid === chatInfo.sellerId
+      
+      let updateData = {}
+      
+      if (isBuyer) {
+        updateData.buyerAccepted = true
+      } else if (isSeller) {
+        updateData.sellerAccepted = true
+      }
+
+      await updateDoc(chatRef, updateData)
+
+      // Check if both parties have accepted
+      const updatedBuyerAccepted = isBuyer ? true : buyerAccepted
+      const updatedSellerAccepted = isSeller ? true : sellerAccepted
+
+      if (updatedBuyerAccepted && updatedSellerAccepted) {
+        // Both parties accepted - finalize the sale
+        await finalizeSale()
+      } else {
+        // Send acceptance message
+        const acceptanceMessage = {
+          senderId: "system",
+          content: `✅ ${isBuyer ? "Buyer" : "Seller"} accepted the offer of ₹${offerPrice}`,
+          timestamp: serverTimestamp(),
+          type: "system",
+          isOfferMessage: true,
+        }
+        
+        await addDoc(collection(db, "chats", chatId, "messages"), acceptanceMessage)
+      }
+
+      // Update local state
+      if (isBuyer) {
+        setBuyerAccepted(true)
+      } else if (isSeller) {
+        setSellerAccepted(true)
+      }
+
+    } catch (error) {
+      console.error("Error accepting offer:", error)
+    } finally {
+      setIsFinalizing(false)
+    }
+  }
+
+  const finalizeSale = async () => {
+    try {
+      // Update the product status
+      const productRef = doc(db, "items", chatInfo.productId)
+      await updateDoc(productRef, {
+        sold: true,
+        status: "sold",
+        soldAt: serverTimestamp(),
+        soldBy: currentUser.uid,
+        finalPrice: parseFloat(offerPrice),
+      })
+
+      // Update the chat info
+      const chatRef = doc(db, "chats", chatId)
+      await updateDoc(chatRef, {
+        productSold: true,
+        soldAt: serverTimestamp(),
+        finalPrice: parseFloat(offerPrice),
+        finalizedAt: serverTimestamp(),
+      })
+
+      // Send finalization message
+      const finalizationMessage = {
+        senderId: "system",
+        content: `🎉 Sale finalized! Product sold for ₹${offerPrice}. Chat will be closed.`,
+        timestamp: serverTimestamp(),
+        type: "system",
+        isOfferMessage: true,
+      }
+      
+      await addDoc(collection(db, "chats", chatId, "messages"), finalizationMessage)
+
+      // Update local state
+      setIsProductSold(true)
+
+      // Close chat after a delay
+      setTimeout(() => {
+        if (onBackClick) {
+          onBackClick()
+        }
+      }, 3000)
+
+    } catch (error) {
+      console.error("Error finalizing sale:", error)
+    }
+  }
+
+  const rejectOffer = async () => {
+    try {
+      const chatRef = doc(db, "chats", chatId)
+      await updateDoc(chatRef, {
+        offerPrice: null,
+        buyerAccepted: false,
+        sellerAccepted: false,
+        offerProposedBy: null,
+        offerProposedAt: null,
+      })
+
+      // Send rejection message
+      const rejectionMessage = {
+        senderId: "system",
+        content: `❌ Offer of ₹${offerPrice} was rejected`,
+        timestamp: serverTimestamp(),
+        type: "system",
+        isOfferMessage: true,
+      }
+      
+      await addDoc(collection(db, "chats", chatId, "messages"), rejectionMessage)
+
+      // Reset local state
+      setOfferPrice("")
+      setBuyerAccepted(false)
+      setSellerAccepted(false)
+
+    } catch (error) {
+      console.error("Error rejecting offer:", error)
+    }
+  }
+
   const getOtherUserName = () => {
     if (!chatInfo || !currentUser) return "Unknown User"
     // If we already have the names in chatInfo, use them
@@ -523,15 +705,29 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           </div>
         </div>
 
-        {/* Product Link Button */}
-        {productLink && (
-          <button
-            onClick={() => window.open(productLink, "_blank")}
-            className="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            View Product
-          </button>
-        )}
+                 {/* Action Buttons */}
+         <div className="flex items-center gap-2">
+           {/* Product Link Button */}
+           {productLink && (
+             <button
+               onClick={() => window.open(productLink, "_blank")}
+               className="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+             >
+               View Product
+             </button>
+           )}
+
+           {/* Offer Finalization Button */}
+           {!isProductSold && chatInfo && currentUser && (
+             <button
+               onClick={() => setShowOfferModal(true)}
+               className="px-3 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+               title="Finalize Offer"
+             >
+               💰 Finalize
+             </button>
+           )}
+         </div>
       </div>
 
       {/* Messages Area */}
@@ -557,49 +753,62 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.senderId === currentUser?.uid ? "justify-end" : "justify-start"}`}
-              >
-                <div
-                  className={`max-w-[75vw] sm:max-w-xs lg:max-w-md px-3 py-2 sm:px-4 sm:py-2 rounded-lg ${
-                    message.senderId === currentUser?.uid
-                      ? "bg-blue-600 text-white"
-                      : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
-                  }`}
-                >
-                  {/* Optional text content */}
-                  {message.content && message.content.trim() !== "" && <p className="text-sm">{message.content}</p>}
+                         {messages.map((message) => {
+               // Handle system messages differently
+               if (message.senderId === "system") {
+                 return (
+                   <div key={message.id} className="flex justify-center my-4">
+                     <div className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm border border-gray-200 dark:border-gray-600">
+                       {message.content}
+                     </div>
+                   </div>
+                 )
+               }
 
-                  {/* Images grid if present */}
-                  {Array.isArray(message.images) && message.images.length > 0 && (
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      {message.images.map((img, idx) => {
-                        const src = typeof img === "string" ? img : img.url
-                        return (
-                          <img
-                            key={idx}
-                            src={src || "/placeholder.svg"}
-                            alt={`Shared image ${idx + 1}`}
-                            className="w-full h-28 object-cover rounded cursor-pointer"
-                            onClick={() => src && window.open(src, "_blank")}
-                          />
-                        )
-                      })}
-                    </div>
-                  )}
+               return (
+                 <div
+                   key={message.id}
+                   className={`flex ${message.senderId === currentUser?.uid ? "justify-end" : "justify-start"}`}
+                 >
+                   <div
+                     className={`max-w-[75vw] sm:max-w-xs lg:max-w-md px-3 py-2 sm:px-4 sm:py-2 rounded-lg ${
+                       message.senderId === currentUser?.uid
+                         ? "bg-blue-600 text-white"
+                         : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
+                     }`}
+                   >
+                     {/* Optional text content */}
+                     {message.content && message.content.trim() !== "" && <p className="text-sm">{message.content}</p>}
 
-                  <div
-                    className={`text-xs mt-1 ${
-                      message.senderId === currentUser?.uid ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
-                    }`}
-                  >
-                    {formatTimeAgo(message.timestamp)}
-                  </div>
-                </div>
-              </div>
-            ))}
+                     {/* Images grid if present */}
+                     {Array.isArray(message.images) && message.images.length > 0 && (
+                       <div className="mt-2 grid grid-cols-2 gap-2">
+                         {message.images.map((img, idx) => {
+                           const src = typeof img === "string" ? img : img.url
+                           return (
+                             <img
+                               key={idx}
+                               src={src || "/placeholder.svg"}
+                               alt={`Shared image ${idx + 1}`}
+                               className="w-full h-28 object-cover rounded cursor-pointer"
+                               onClick={() => src && window.open(src, "_blank")}
+                             />
+                           )
+                         })}
+                       </div>
+                     )}
+
+                     <div
+                       className={`text-xs mt-1 ${
+                         message.senderId === currentUser?.uid ? "text-blue-100" : "text-gray-500 dark:text-gray-400"
+                       }`}
+                     >
+                       {formatTimeAgo(message.timestamp)}
+                     </div>
+                   </div>
+                 </div>
+               )
+             })}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -658,10 +867,115 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
               />
             </svg>
           </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+                 </div>
+       </div>
 
-export default ChatRoom
+       {/* Offer Modal */}
+       {showOfferModal && (
+         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
+             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+               Finalize Offer
+             </h3>
+             
+             <div className="space-y-4">
+               <div>
+                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                   Offer Price (₹)
+                 </label>
+                 <input
+                   type="number"
+                   value={offerPrice}
+                   onChange={(e) => setOfferPrice(e.target.value)}
+                   placeholder="Enter offer price"
+                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                 />
+               </div>
+               
+               <div className="flex gap-3">
+                 <button
+                   onClick={proposeOffer}
+                   className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                 >
+                   Propose Offer
+                 </button>
+                 <button
+                   onClick={() => setShowOfferModal(false)}
+                   className="flex-1 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                 >
+                   Cancel
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
+
+       {/* Active Offer Display */}
+       {offerPrice && !isProductSold && (
+         <div className="p-4 bg-green-50 dark:bg-green-900/20 border-t border-green-200 dark:border-green-800">
+           <div className="flex items-center justify-between">
+             <div className="flex-1">
+               <h4 className="font-semibold text-green-800 dark:text-green-200">
+                 Active Offer: ₹{offerPrice}
+               </h4>
+               <div className="flex items-center gap-4 mt-2 text-sm text-green-700 dark:text-green-300">
+                 <span className={`flex items-center gap-1 ${buyerAccepted ? 'text-green-600' : 'text-gray-500'}`}>
+                   {buyerAccepted ? '✅' : '⏳'} Buyer {buyerAccepted ? 'Accepted' : 'Pending'}
+                 </span>
+                 <span className={`flex items-center gap-1 ${sellerAccepted ? 'text-green-600' : 'text-gray-500'}`}>
+                   {sellerAccepted ? '✅' : '⏳'} Seller {sellerAccepted ? 'Accepted' : 'Pending'}
+                 </span>
+               </div>
+             </div>
+             
+             <div className="flex gap-2">
+               {!buyerAccepted && currentUser?.uid === chatInfo?.buyerId && (
+                 <button
+                   onClick={acceptOffer}
+                   disabled={isFinalizing}
+                   className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm"
+                 >
+                   {isFinalizing ? 'Processing...' : 'Accept'}
+                 </button>
+               )}
+               
+               {!sellerAccepted && currentUser?.uid === chatInfo?.sellerId && (
+                 <button
+                   onClick={acceptOffer}
+                   disabled={isFinalizing}
+                   className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition-colors text-sm"
+                 >
+                   {isFinalizing ? 'Processing...' : 'Accept'}
+                 </button>
+               )}
+               
+               <button
+                 onClick={rejectOffer}
+                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
+               >
+                 Reject
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+
+       {/* Sale Finalized Message */}
+       {isProductSold && (
+         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-800">
+           <div className="text-center">
+             <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+               🎉 Sale Finalized!
+             </h4>
+             <p className="text-sm text-blue-700 dark:text-blue-300">
+               Product sold for ₹{offerPrice || 'negotiated price'}. Chat will be closed shortly.
+             </p>
+           </div>
+         </div>
+       )}
+     </div>
+   )
+ }
+
+ export default ChatRoom
