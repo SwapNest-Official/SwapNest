@@ -11,7 +11,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4.17-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-6.2.0-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
 
-[🚀 Live Demo](https://swapnest.vercel.app) • [📖 Documentation](https://github.com/SwapNest-Official/SwapNest/wiki) • [🐛 Report Bug](https://github.com/SwapNest-Official/SwapNest/issues) • [💡 Request Feature](https://github.com/SwapNest-Official/SwapNest/issues)
+[🚀 Live Demo]([https://swapnest.vercel.app](https://swap-nest-self.vercel.app/)) • [📖 Documentation](https://github.com/SwapNest-Official/SwapNest/wiki) • [🐛 Report Bug](https://github.com/SwapNest-Official/SwapNest/issues) • [💡 Request Feature](https://github.com/SwapNest-Official/SwapNest/issues)
 
 </div>
 
