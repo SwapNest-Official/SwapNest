@@ -140,6 +140,34 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     loadChatInfo()
   }, [chatId])
 
+  // Listen for real-time updates to chat info (including offer status)
+  useEffect(() => {
+    if (!chatId) return
+
+    const chatRef = doc(db, "chats", chatId)
+    const unsubscribe = onSnapshot(chatRef, (doc) => {
+      if (doc.exists()) {
+        const chatData = doc.data()
+        console.log("Real-time chat update:", chatData)
+        
+        // Update offer status in real-time
+        if (chatData.buyerAccepted !== undefined) {
+          setBuyerAccepted(chatData.buyerAccepted)
+        }
+        if (chatData.sellerAccepted !== undefined) {
+          setSellerAccepted(chatData.sellerAccepted)
+        }
+        if (chatData.productSold) {
+          setIsProductSold(true)
+        }
+      }
+    }, (error) => {
+      console.error("Error listening to chat updates:", error)
+    })
+
+    return () => unsubscribe()
+  }, [chatId])
+
   console.log(images)
   // Load messages in real-time
   useEffect(() => {
@@ -460,12 +488,30 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
       await updateDoc(chatRef, updateData)
 
-      // Check if both parties have accepted
-      const updatedBuyerAccepted = isBuyer ? true : buyerAccepted
-      const updatedSellerAccepted = isSeller ? true : sellerAccepted
+      // Update local state
+      if (isBuyer) {
+        setBuyerAccepted(true)
+      } else if (isSeller) {
+        setSellerAccepted(true)
+      }
 
-      if (updatedBuyerAccepted && updatedSellerAccepted) {
+      // Check if both parties have accepted by reading the updated document
+      const updatedChatDoc = await getDoc(chatRef)
+      const updatedChatData = updatedChatDoc.data()
+      
+      const bothAccepted = updatedChatData.buyerAccepted && updatedChatData.sellerAccepted
+
+      console.log("Acceptance check:", {
+        isBuyer,
+        isSeller,
+        buyerAccepted: updatedChatData.buyerAccepted,
+        sellerAccepted: updatedChatData.sellerAccepted,
+        bothAccepted
+      })
+
+      if (bothAccepted) {
         // Both parties accepted - finalize the sale
+        console.log("Both parties accepted! Finalizing sale...")
         await finalizeSale()
       } else {
         // Send acceptance message
@@ -480,13 +526,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         await addDoc(collection(db, "chats", chatId, "messages"), acceptanceMessage)
       }
 
-      // Update local state
-      if (isBuyer) {
-        setBuyerAccepted(true)
-      } else if (isSeller) {
-        setSellerAccepted(true)
-      }
-
     } catch (error) {
       console.error("Error accepting offer:", error)
     } finally {
@@ -496,15 +535,23 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
   const finalizeSale = async () => {
     try {
-      // Update the product status
+      console.log("finalizeSale called - starting sale finalization...")
+      
+      // Update the product status to remove it from marketplace
       const productRef = doc(db, "items", chatInfo.productId)
+      console.log("Updating product:", chatInfo.productId)
       await updateDoc(productRef, {
         sold: true,
         status: "sold",
         soldAt: serverTimestamp(),
         soldBy: currentUser.uid,
         finalPrice: parseFloat(offerPrice),
+        // Add fields to ensure it's filtered out from listings
+        isActive: false,
+        removedFromMarketplace: true,
+        removedAt: serverTimestamp(),
       })
+      console.log("Product updated successfully")
 
       // Update the chat info
       const chatRef = doc(db, "chats", chatId)
@@ -513,12 +560,17 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         soldAt: serverTimestamp(),
         finalPrice: parseFloat(offerPrice),
         finalizedAt: serverTimestamp(),
+        productRemoved: true,
       })
+      console.log("Chat updated successfully")
+
+      // Increment the total offers counter
+      await incrementOffersCounter()
 
       // Send finalization message
       const finalizationMessage = {
         senderId: "system",
-        content: `🎉 Sale finalized! Product sold for ₹${offerPrice}. Chat will be closed.`,
+        content: `🎉 Sale finalized! Product sold for ₹${offerPrice}. Listing has been removed from marketplace. Chat will be closed.`,
         timestamp: serverTimestamp(),
         type: "system",
         isOfferMessage: true,
@@ -528,9 +580,12 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
       // Update local state
       setIsProductSold(true)
+      console.log("Local state updated - product marked as sold")
 
       // Close chat after a delay
+      console.log("Setting timeout to close chat in 3 seconds...")
       setTimeout(() => {
+        console.log("Timeout reached - closing chat")
         if (onBackClick) {
           onBackClick()
         }
@@ -538,6 +593,32 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
     } catch (error) {
       console.error("Error finalizing sale:", error)
+    }
+  }
+
+  const incrementOffersCounter = async () => {
+    try {
+      const counterRef = doc(db, "counters", "offers")
+      await setDoc(counterRef, {
+        totalOffers: serverTimestamp(), // This will be handled by a cloud function or we'll use increment
+      }, { merge: true })
+      
+      // Alternative approach: Use a transaction to increment
+      const counterDoc = await getDoc(counterRef)
+      if (counterDoc.exists()) {
+        const currentCount = counterDoc.data().totalOffers || 0
+        await setDoc(counterRef, {
+          totalOffers: currentCount + 1,
+          lastUpdated: serverTimestamp()
+        })
+      } else {
+        await setDoc(counterRef, {
+          totalOffers: 1,
+          lastUpdated: serverTimestamp()
+        })
+      }
+    } catch (error) {
+      console.error("Error incrementing offers counter:", error)
     }
   }
 
