@@ -5,9 +5,10 @@ import dotenv from 'dotenv';
 // import helmet from 'helmet';
 // import compression from 'compression';
 // import rateLimit from 'express-rate-limit';
-// import { fileURLToPath } from 'url';
-// import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 // import { redisHealthCheck } from './utils/redis.js';
+import fs from 'fs';
 
 // Import routes (commented out for now)
 // import authRoutes from './routes/auth.js';
@@ -23,6 +24,10 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+/* ---------------- Path Setup ---------------- */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /* ---------------- Security Middleware ---------------- */
 // app.use(helmet());
@@ -83,18 +88,19 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 /* ---------------- OTP Route ---------------- */
 app.post('/send-otp', async (req, res) => {
-//  console.log("📩 OTP endpoint hit:", req.body);
-  const { email ,code} = req.body;
+  const { email, code } = req.body;
   console.log("📩 HIT /send-otp route");
 
   if (!email) {
     return res.status(400).json({ success: false, message: "Email is required" });
   }
 
-  console.log(email);
-
   try {
-//    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // Read otpemail.html from templates folder
+    let otpemail = fs.readFileSync(join(__dirname, 'templates', 'otpmail.html'), 'utf8');
+
+    // Replace placeholder {{CODE}} in template with actual code
+    otpemail = otpemail.replace('{{CODE}}', code);
 
     const transporter = nodemailer.createTransport({
       service: "gmail", // or custom SMTP
@@ -102,22 +108,13 @@ app.post('/send-otp', async (req, res) => {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS, // App password for Gmail
       },
-      
     });
-//    console.log(process.env.MAIL_USER,process.env.MAIL_PASS);
 
     await transporter.sendMail({
       from: `"SwapNest" <${process.env.MAIL_USER}>`,
       to: email,
       subject: "Your OTP Code - SwapNest",
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px;">
-          <h2>SwapNest Verification</h2>
-          <p>Your one-time password (OTP) is:</p>
-          <h1 style="color: #4F46E5; letter-spacing: 4px;">${code}</h1>
-          <p>This code is valid for <b>10 minutes</b>.</p>
-        </div>
-      `,
+      html: otpemail,
     });
 
     console.log(`✅ OTP sent to ${email}: ${code}`);
@@ -128,8 +125,6 @@ app.post('/send-otp', async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to send OTP" });
   }
 });
-
-
 
 /* ---------------- Health Check (optional) ---------------- */
 // app.get('/api/health', async (req, res) => {
