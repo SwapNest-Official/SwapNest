@@ -44,21 +44,29 @@ const __dirname = dirname(__filename);
 /* ---------------- CORS Setup ---------------- */
 const corsOrigins = process.env.CORS_ORIGINS 
   ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
-  : ['http://localhost:3000', 'http://localhost:5173'];
+  : [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'https://swapnest.in',
+      'https://www.swapnest.in'
+    ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (corsOrigins.indexOf(origin) !== -1) {
+    if (!origin) return callback(null, true); // allow curl / Postman with no origin
+    if (corsOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('Not allowed by CORS: ' + origin));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Explicitly handle preflight requests
+app.options('*', cors());
 
 /* ---------------- Body Parsing ---------------- */
 app.use(express.json({ limit: '10mb' }));
