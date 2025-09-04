@@ -49,7 +49,7 @@ const auth = getAuth();
       sessionStorage.setItem("verificationCode", code)
       sessionStorage.setItem("verificationEmail", userCredentials.email)
 
-    const res = await fetch("http://localhost:5000/send-otp", {  
+    const res = await fetch("https://swapnest-m4p9.onrender.com/send-otp", {  
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: userCredentials.email, code:code }),
