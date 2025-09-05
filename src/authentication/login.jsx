@@ -9,64 +9,89 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Mail, Lock, LogIn, Shield, Star, Users, CheckCircle, AlertCircle, Sparkles, KeyRound } from "lucide-react"
-import { auth } from "../firebase/config";
-import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { auth } from "../firebase/config"
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth"
+import { useNavigate } from "react-router-dom"
 
 const LoginPage = () => {
   const [userCredentials, setUserCredentials] = useState({ email: "", password: "" })
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   function handleChange(e) {
     setUserCredentials({ ...userCredentials, [e.target.name]: e.target.value })
   }
 
-  // Your exact handleLogin function - unchanged
   function handleLogin(e) {
     e.preventDefault()
     setError("")
     setLoading(true)
-      signInWithEmailAndPassword(auth, userCredentials.email, userCredentials.password)
-        .then((userCredential) => {
-          setLoading(false);
-          navigate("/");
-        })
-        .catch((error) => {
-          let errorMessage = "An unexpected error occurred. Please try again.";
-          if (error.code === "auth/invalid-email") {
-            errorMessage = "Invalid email format. Please enter a valid email.";
-          } else if (error.code === "auth/user-not-found") {
-            errorMessage = "No account found with this email. Please sign up.";
-          } else if (error.code === "auth/wrong-password") {
-            errorMessage = "Incorrect password. Please try again.";
-          } else if (error.code === "auth/too-many-requests") {
-            errorMessage = "Too many login attempts. Please try again later.";
-          }
-          setLoading(false);
-          setError(errorMessage);
-        });
-       
+    signInWithEmailAndPassword(auth, userCredentials.email, userCredentials.password)
+      .then((userCredential) => {
+        setLoading(false)
+        navigate("/")
+      })
+      .catch((error) => {
+        console.log("[v0] Firebase auth error:", error.code, error.message)
+        let errorMessage = "An unexpected error occurred. Please try again."
 
-      
-     
-    
-    }
-  
+        // Comprehensive error handling for Firebase auth
+        switch (error.code) {
+          case "auth/invalid-email":
+            errorMessage = "Please enter a valid email address."
+            break
+          case "auth/user-disabled":
+            errorMessage = "This account has been disabled. Please contact support."
+            break
+          case "auth/user-not-found":
+            errorMessage = "No account found with this email. Please check your email or sign up."
+            break
+          case "auth/wrong-password":
+          case "auth/invalid-credential":
+            errorMessage = "Incorrect email or password. Please try again."
+            break
+          case "auth/invalid-login-credentials":
+            errorMessage = "Invalid login credentials. Please check your email and password."
+            break
+          case "auth/too-many-requests":
+            errorMessage = "Too many failed login attempts. Please try again later or reset your password."
+            break
+          case "auth/network-request-failed":
+            errorMessage = "Network error. Please check your internet connection and try again."
+            break
+          case "auth/weak-password":
+            errorMessage = "Password is too weak. Please choose a stronger password."
+            break
+          case "auth/email-already-in-use":
+            errorMessage = "An account with this email already exists."
+            break
+          case "auth/operation-not-allowed":
+            errorMessage = "Email/password accounts are not enabled. Please contact support."
+            break
+          case "auth/missing-password":
+            errorMessage = "Please enter your password."
+            break
+          case "auth/missing-email":
+            errorMessage = "Please enter your email address."
+            break
+          default:
+            // Log unknown errors for debugging
+            console.log("[v0] Unknown auth error:", error.code)
+            errorMessage = `Login failed: ${error.message || "Please try again."}`
+        }
 
- 
+        setLoading(false)
+        setError(errorMessage)
+      })
+  }
+
   function handleResetPassword() {
     const email = prompt("Enter your email for password reset:")
     if (email) {
-     
       sendPasswordResetEmail(auth, email)
         .then(() => alert("Password reset email sent!"))
-        .catch((error) => setError("Failed to send reset email. Please check your email and try again."));
-     
-
-     
-    
+        .catch((error) => setError("Failed to send reset email. Please check your email and try again."))
     }
   }
 
@@ -124,9 +149,7 @@ const LoginPage = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-             
-            </div>
+            <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 border border-white/20"></div>
           </div>
 
           <div className="space-y-3">
@@ -240,7 +263,7 @@ const LoginPage = () => {
               <div className="text-center">
                 <Button
                   variant="outline"
-                  className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 font-medium"
+                  className="w-full border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 font-medium bg-transparent"
                   onClick={() => (window.location.href = "/signup")}
                 >
                   Create New Account
@@ -251,21 +274,17 @@ const LoginPage = () => {
 
           {/* Mobile-only marketing content */}
           <div className="lg:hidden mt-8 space-y-6">
-       
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 shadow-sm">
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="p-3 bg-blue-100 rounded-xl">
-                    <Users className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xl font-bold text-gray-900">500+</p>
-                    <p className="text-xs text-gray-600">Active Students</p>
-                  </div>
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-gray-200/50 shadow-sm">
+              <div className="flex flex-col items-center space-y-2">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <Users className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-bold text-gray-900">500+</p>
+                  <p className="text-xs text-gray-600">Active Students</p>
                 </div>
               </div>
-
-            
-           
+            </div>
 
             <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
               <p className="text-gray-700 text-sm font-medium text-center">🎓 Welcome back to your college community</p>

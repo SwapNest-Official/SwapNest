@@ -1,16 +1,26 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getFirestore, collection, query, where, getDocs, doc, getDoc, onSnapshot, deleteDoc, orderBy, updateDoc } from "firebase/firestore"
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  doc,
+  getDoc,
+  onSnapshot,
+  deleteDoc,
+  updateDoc,
+} from "firebase/firestore"
 import { formatTimeAgo, getInitials, getAvatarColor } from "./chatUtils"
 import { useNavigate } from "react-router-dom"
-import { Search, MessageCircle, Trash2, ArrowLeft } from "lucide-react"
+import { Search, MessageCircle, Trash2 } from "lucide-react"
 import { useTheme } from "../contexts/ThemeContext"
 
 const db = getFirestore()
 
 const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const [chats, setChats] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
@@ -20,7 +30,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
   // Function to update chat with proper user names
   const updateChatWithUserNames = async (chat) => {
     try {
-      let updatedChat = { ...chat }
+      const updatedChat = { ...chat }
       let needsUpdate = false
 
       // If buyer name is missing, fetch it
@@ -50,7 +60,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
         const chatRef = doc(db, "chats", chat.id)
         await updateDoc(chatRef, {
           buyerName: updatedChat.buyerName,
-          sellerName: updatedChat.sellerName
+          sellerName: updatedChat.sellerName,
         })
         console.log(`ChatList: Updated chat ${chat.id} with user names`)
       }
@@ -72,100 +82,102 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
 
     console.log("ChatList: Loading chats for user:", currentUser.uid)
     setLoading(true)
-    
+
     const chatsRef = collection(db, "chats")
-    
+
     // Query for chats where user is buyer
-    const buyerQuery = query(
-      chatsRef,
-      where("buyerId", "==", currentUser.uid)
-    )
-    
+    const buyerQuery = query(chatsRef, where("buyerId", "==", currentUser.uid))
+
     // Query for chats where user is seller
-    const sellerQuery = query(
-      chatsRef,
-      where("sellerId", "==", currentUser.uid)
+    const sellerQuery = query(chatsRef, where("sellerId", "==", currentUser.uid))
+
+    const unsubscribe1 = onSnapshot(
+      buyerQuery,
+      async (snapshot) => {
+        console.log("ChatList: Buyer chats snapshot:", snapshot.docs.length, "chats")
+        const buyerChats = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const chatData = { id: doc.id, ...doc.data() }
+
+            // Update chat with proper user names
+            const updatedChat = await updateChatWithUserNames(chatData)
+
+            // Fetch seller name for buyer chats if still missing
+            if (updatedChat.sellerId && !updatedChat.sellerName) {
+              try {
+                const sellerDoc = await getDoc(doc(db, "users", updatedChat.sellerId))
+                if (sellerDoc.exists()) {
+                  const sellerData = sellerDoc.data()
+                  updatedChat.sellerName = sellerData.fullName || sellerData.name || "Unknown User"
+                  console.log(`ChatList: Fetched seller name for chat ${doc.id}:`, updatedChat.sellerName)
+                }
+              } catch (error) {
+                console.error(`ChatList: Error fetching seller name for chat ${doc.id}:`, error)
+                updatedChat.sellerName = "Unknown User"
+              }
+            }
+
+            return updatedChat
+          }),
+        )
+        console.log("ChatList: Buyer chats with names:", buyerChats)
+
+        // Update chats with buyer chats
+        setChats((prevChats) => {
+          const nonBuyerChats = prevChats.filter((chat) => chat.buyerId !== currentUser.uid)
+          return [...nonBuyerChats, ...buyerChats]
+        })
+        setLoading(false)
+      },
+      (error) => {
+        console.error("ChatList: Error loading buyer chats:", error)
+        setLoading(false)
+      },
     )
 
-    const unsubscribe1 = onSnapshot(buyerQuery, async (snapshot) => {
-      console.log("ChatList: Buyer chats snapshot:", snapshot.docs.length, "chats")
-      const buyerChats = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const chatData = { id: doc.id, ...doc.data() }
-          
-          // Update chat with proper user names
-          const updatedChat = await updateChatWithUserNames(chatData)
-          
-          // Fetch seller name for buyer chats if still missing
-          if (updatedChat.sellerId && !updatedChat.sellerName) {
-            try {
-              const sellerDoc = await getDoc(doc(db, "users", updatedChat.sellerId))
-              if (sellerDoc.exists()) {
-                const sellerData = sellerDoc.data()
-                updatedChat.sellerName = sellerData.fullName || sellerData.name || "Unknown User"
-                console.log(`ChatList: Fetched seller name for chat ${doc.id}:`, updatedChat.sellerName)
-              }
-            } catch (error) {
-              console.error(`ChatList: Error fetching seller name for chat ${doc.id}:`, error)
-              updatedChat.sellerName = "Unknown User"
-            }
-          }
-          
-          return updatedChat
-        })
-      )
-      console.log("ChatList: Buyer chats with names:", buyerChats)
-      
-      // Update chats with buyer chats
-      setChats(prevChats => {
-        const nonBuyerChats = prevChats.filter(chat => chat.buyerId !== currentUser.uid)
-        return [...nonBuyerChats, ...buyerChats]
-      })
-      setLoading(false)
-    }, (error) => {
-      console.error("ChatList: Error loading buyer chats:", error)
-      setLoading(false)
-    })
+    const unsubscribe2 = onSnapshot(
+      sellerQuery,
+      async (snapshot) => {
+        console.log("ChatList: Seller chats snapshot:", snapshot.docs.length, "chats")
+        const sellerChats = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const chatData = { id: doc.id, ...doc.data() }
 
-    const unsubscribe2 = onSnapshot(sellerQuery, async (snapshot) => {
-      console.log("ChatList: Seller chats snapshot:", snapshot.docs.length, "chats")
-      const sellerChats = await Promise.all(
-        snapshot.docs.map(async (doc) => {
-          const chatData = { id: doc.id, ...doc.data() }
-          
-          // Update chat with proper user names
-          const updatedChat = await updateChatWithUserNames(chatData)
-          
-          // Fetch buyer name for seller chats if still missing
-          if (updatedChat.buyerId && !updatedChat.buyerName) {
-            try {
-              const buyerDoc = await getDoc(doc(db, "users", updatedChat.buyerId))
-              if (buyerDoc.exists()) {
-                const buyerData = buyerDoc.data()
-                updatedChat.buyerName = buyerData.fullName || buyerData.name || "Unknown User"
-                console.log(`ChatList: Fetched buyer name for chat ${doc.id}:`, updatedChat.buyerName)
+            // Update chat with proper user names
+            const updatedChat = await updateChatWithUserNames(chatData)
+
+            // Fetch buyer name for seller chats if still missing
+            if (updatedChat.buyerId && !updatedChat.buyerName) {
+              try {
+                const buyerDoc = await getDoc(doc(db, "users", updatedChat.buyerId))
+                if (buyerDoc.exists()) {
+                  const buyerData = buyerDoc.data()
+                  updatedChat.buyerName = buyerData.fullName || buyerData.name || "Unknown User"
+                  console.log(`ChatList: Fetched buyer name for chat ${doc.id}:`, updatedChat.buyerName)
+                }
+              } catch (error) {
+                console.error(`ChatList: Error fetching buyer name for chat ${doc.id}:`, error)
+                updatedChat.buyerName = "Unknown User"
               }
-            } catch (error) {
-              console.error(`ChatList: Error fetching buyer name for chat ${doc.id}:`, error)
-              updatedChat.buyerName = "Unknown User"
             }
-          }
-          
-          return updatedChat
+
+            return updatedChat
+          }),
+        )
+        console.log("ChatList: Seller chats with names:", sellerChats)
+
+        // Update chats with seller chats
+        setChats((prevChats) => {
+          const nonSellerChats = prevChats.filter((chat) => chat.sellerId !== currentUser.uid)
+          return [...nonSellerChats, ...sellerChats]
         })
-      )
-      console.log("ChatList: Seller chats with names:", sellerChats)
-      
-      // Update chats with seller chats
-      setChats(prevChats => {
-        const nonSellerChats = prevChats.filter(chat => chat.sellerId !== currentUser.uid)
-        return [...nonSellerChats, ...sellerChats]
-      })
-      setLoading(false)
-    }, (error) => {
-      console.error("ChatList: Error loading seller chats:", error)
-      setLoading(false)
-    })
+        setLoading(false)
+      },
+      (error) => {
+        console.error("ChatList: Error loading seller chats:", error)
+        setLoading(false)
+      },
+    )
 
     return () => {
       unsubscribe1()
@@ -203,7 +215,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
       <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">Messages</h1>
         <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-3 sm:mb-4">Chat with buyers and sellers</p>
-        
+
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -241,6 +253,12 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
                   chat.lastMessage?.toLowerCase().includes(searchLower)
                 )
               })
+              .sort((a, b) => {
+                // Convert Firestore timestamps to comparable values
+                const aTime = a.lastUpdated?.toDate?.() || a.lastUpdated || new Date(0)
+                const bTime = b.lastUpdated?.toDate?.() || b.lastUpdated || new Date(0)
+                return new Date(bTime) - new Date(aTime) // Most recent first
+              })
               .map((chat) => {
                 const otherUserName = getOtherUserName(chat)
                 return (
@@ -256,9 +274,9 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
                     <div className="flex items-center gap-2 sm:gap-3">
                       {/* Avatar */}
                       <div
-                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0 ${
-                          getAvatarColor(otherUserName || "Unknown")
-                        }`}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-semibold text-xs sm:text-sm flex-shrink-0 ${getAvatarColor(
+                          otherUserName || "Unknown",
+                        )}`}
                       >
                         {getInitials(otherUserName || "Unknown")}
                       </div>
@@ -273,12 +291,12 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
                             {formatTimeAgo(chat.lastUpdated)}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 truncate flex-1">
                             {chat.lastMessage || "No messages yet"}
                           </p>
-                          
+
                           {/* Delete Button */}
                           <button
                             onClick={(e) => {
@@ -303,7 +321,7 @@ const ChatList = ({ currentUser, selectedChatId, onChatSelect }) => {
       {/* Footer */}
       <div className="p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
         <p className="text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-          {chats.length} conversation{chats.length !== 1 ? 's' : ''}
+          {chats.length} conversation{chats.length !== 1 ? "s" : ""}
         </p>
       </div>
     </div>
