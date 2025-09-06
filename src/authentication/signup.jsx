@@ -93,7 +93,7 @@ const SignupPage = () => {
       const storedCode = sessionStorage.getItem("verificationCode")
       const storedEmail = sessionStorage.getItem("verificationEmail")
 
-      console.log(storedCode, storedEmail, enteredCode, userCredentials.email)
+     // console.log(storedCode, storedEmail, enteredCode, userCredentials.email)
       if (enteredCode !== storedCode || userCredentials.email !== storedEmail) {
         throw new Error("Invalid verification code")
       }
