@@ -90,7 +90,7 @@ const LoginPage = () => {
     const email = prompt("Enter your email for password reset:")
     if (email) {
       sendPasswordResetEmail(auth, email)
-        .then(() => alert("Password reset email sent!"))
+        .then(() => alert("Password reset email sent! The mail might be detected as Spam, So Please check spam folder too !"))
         .catch((error) => setError("Failed to send reset email. Please check your email and try again."))
     }
   }

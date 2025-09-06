@@ -21,7 +21,7 @@ import { useTheme } from "../contexts/ThemeContext"
 
 const db = getFirestore()
 
-const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
+const ChatRoom = ({ chatId, currentUser, onBackClick }) => {
   const [chatInfo, setChatInfo] = useState(null)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState("")
@@ -37,6 +37,8 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
   const [sellerAccepted, setSellerAccepted] = useState(false)
   const [showOfferModal, setShowOfferModal] = useState(false)
   const [isFinalizing, setIsFinalizing] = useState(false)
+  const [showRemoveListingDialog, setShowRemoveListingDialog] = useState(false)
+  const [pendingSaleData, setPendingSaleData] = useState(null)
   const { isDarkMode } = useTheme()
 
   const messagesEndRef = useRef(null)
@@ -70,8 +72,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }, [chatId, currentUser])
 
-  console.log(productLink)
-
   // Mark as read when new messages arrive (if chat is currently open)
   useEffect(() => {
     if (messages.length > 0 && hasMarkedAsRead.current && chatId && currentUser?.uid) {
@@ -93,8 +93,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       return () => clearTimeout(markAsReadDebounced)
     }
   }, [messages.length, chatId, currentUser])
-
-  // console.log(messages)
 
   // Load chat info
   useEffect(() => {
@@ -152,7 +150,12 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           const chatData = doc.data()
           console.log("Real-time chat update:", chatData)
 
+          setChatInfo(chatData)
+
           // Update offer status in real-time
+          if (chatData.offerPrice !== undefined) {
+            setOfferPrice(chatData.offerPrice?.toString() || "")
+          }
           if (chatData.buyerAccepted !== undefined) {
             setBuyerAccepted(chatData.buyerAccepted)
           }
@@ -161,6 +164,16 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           }
           if (chatData.productSold) {
             setIsProductSold(true)
+          }
+
+          if (chatData.offerProposedBy && chatData.offerPrice) {
+            // Trigger UI update for active offer
+            console.log("Active offer detected:", {
+              price: chatData.offerPrice,
+              proposedBy: chatData.offerProposedBy,
+              buyerAccepted: chatData.buyerAccepted,
+              sellerAccepted: chatData.sellerAccepted,
+            })
           }
         }
       },
@@ -172,7 +185,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     return () => unsubscribe()
   }, [chatId])
 
-  console.log(images)
   // Load messages in real-time
   useEffect(() => {
     if (!chatId) return
@@ -241,7 +253,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  //console.log(productLink)
   const handleImageUpload = async (event) => {
     const files = event.target.files
     if (!files || files.length === 0) return
@@ -292,8 +303,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       setIsUploading(false)
     }
   }
-
-  console.log(images)
 
   const removeImage = (index) => {
     const newImages = [...images]
@@ -407,39 +416,85 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }
 
-  const markAsSold = async () => {
+  const finalizeSale = async () => {
     try {
-      // Update the product status in the products collection
-      const productRef = doc(db, "items", chatInfo.productId)
-      await updateDoc(productRef, {
-        sold: true,
-        status: "sold",
-        soldAt: serverTimestamp(),
-        soldBy: currentUser.uid,
-      })
+      console.log("finalizeSale called - starting sale finalization...")
 
-      // Also update the chat info to reflect the change
+      const isSeller = currentUser.uid === chatInfo.sellerId
+
+      if (isSeller) {
+        setPendingSaleData({
+          productId: chatInfo.productId,
+          chatId: chatId,
+          offerPrice: offerPrice,
+          currentUserId: currentUser.uid,
+        })
+        setShowRemoveListingDialog(true)
+        return // Exit early, actual finalization will happen after confirmation
+      }
+
+      await completeSaleFinalization(false) // false = don't remove listing
+    } catch (error) {
+      console.error("Error finalizing sale:", error)
+    }
+  }
+
+  const completeSaleFinalization = async (removeListing = false) => {
+    try {
+      console.log("completeSaleFinalization called - removeListing:", removeListing)
+
+      const productRef = doc(db, "items", chatInfo.productId)
+
+      if (removeListing) {
+        console.log("Deleting product from database:", chatInfo.productId)
+        await deleteDoc(productRef)
+      } 
+
       const chatRef = doc(db, "chats", chatId)
       await updateDoc(chatRef, {
         productSold: true,
         soldAt: serverTimestamp(),
+        finalPrice: Number.parseFloat(offerPrice),
+        finalizedAt: serverTimestamp(),
+        productRemoved: removeListing,
       })
+      console.log("Chat updated successfully")
 
-      // Update local state
-      setIsProductSold(true)
+      await incrementOffersCounter()
 
-      // Close the modal
-      setShowMarkAsSoldModal(false)
-
-      // Show success message or navigate back
-      if (onBackClick) {
-        setTimeout(() => {
-          onBackClick()
-        }, 1000) // Small delay to show success
+      const finalizationMessage = {
+        senderId: "system",
+        content: removeListing
+          ? `🎉 Sale finalized! Product sold for ₹${offerPrice}. Listing has been removed from marketplace. Chat will be closed.`
+          : `🎉 Sale finalized! Product sold for ₹${offerPrice}. Chat will be closed.`,
+        timestamp: serverTimestamp(),
+        type: "system",
+        isOfferMessage: true,
       }
+
+      await addDoc(collection(db, "chats", chatId, "messages"), finalizationMessage)
+
+      setIsProductSold(true)
+      console.log("Local state updated - product marked as sold")
+
+      console.log("Setting timeout to close chat in 3 seconds...")
+      setTimeout(() => {
+        console.log("Timeout reached - closing chat")
+        if (onBackClick) {
+          onBackClick()
+        }
+      }, 3000)
     } catch (error) {
-      console.error("Error marking product as sold:", error)
-      // You could add error handling here, like showing an error toast
+      console.error("Error completing sale finalization:", error)
+    }
+  }
+
+  const handleRemoveListingConfirmation = async (shouldRemove) => {
+    setShowRemoveListingDialog(false)
+
+    if (pendingSaleData) {
+      await completeSaleFinalization(shouldRemove)
+      setPendingSaleData(null)
     }
   }
 
@@ -461,7 +516,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
       setShowOfferModal(false)
 
-      // Send a system message about the offer
       const systemMessage = {
         senderId: "system",
         content: `💰 Offer proposed: ₹${offerPrice}`,
@@ -494,16 +548,10 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         updateData.sellerAccepted = true
       }
 
+      updateData.lastUpdated = serverTimestamp()
+
       await updateDoc(chatRef, updateData)
 
-      // Update local state
-      if (isBuyer) {
-        setBuyerAccepted(true)
-      } else if (isSeller) {
-        setSellerAccepted(true)
-      }
-
-      // Check if both parties have accepted by reading the updated document
       const updatedChatDoc = await getDoc(chatRef)
       const updatedChatData = updatedChatDoc.data()
 
@@ -518,14 +566,12 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       })
 
       if (bothAccepted) {
-        // Both parties accepted - finalize the sale
         console.log("Both parties accepted! Finalizing sale...")
         await finalizeSale()
       } else {
-        // Send acceptance message
         const acceptanceMessage = {
           senderId: "system",
-          content: `✅ ${isBuyer ? "Buyer" : "Seller"} accepted the offer of ₹${offerPrice}`,
+          content: `✅ ${isBuyer ? "Buyer" : "Seller"} accepted the offer of ₹${updatedChatData.offerPrice}`,
           timestamp: serverTimestamp(),
           type: "system",
           isOfferMessage: true,
@@ -540,80 +586,38 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }
 
-  const finalizeSale = async () => {
+  const rejectOffer = async () => {
     try {
-      console.log("finalizeSale called - starting sale finalization...")
-
-      // Update the product status to remove it from marketplace
-      const productRef = doc(db, "items", chatInfo.productId)
-      console.log("Updating product:", chatInfo.productId)
-      await updateDoc(productRef, {
-        sold: true,
-        status: "sold",
-        soldAt: serverTimestamp(),
-        soldBy: currentUser.uid,
-        finalPrice: Number.parseFloat(offerPrice),
-        // Add fields to ensure it's filtered out from listings
-        isActive: false,
-        removedFromMarketplace: true,
-        removedAt: serverTimestamp(),
-      })
-      console.log("Product updated successfully")
-
-      // Update the chat info
       const chatRef = doc(db, "chats", chatId)
+
+      const currentOfferPrice = offerPrice || chatInfo?.offerPrice
+
       await updateDoc(chatRef, {
-        productSold: true,
-        soldAt: serverTimestamp(),
-        finalPrice: Number.parseFloat(offerPrice),
-        finalizedAt: serverTimestamp(),
-        productRemoved: true,
+        offerPrice: null,
+        buyerAccepted: false,
+        sellerAccepted: false,
+        offerProposedBy: null,
+        offerProposedAt: null,
+        lastUpdated: serverTimestamp(),
       })
-      console.log("Chat updated successfully")
 
-      // Increment the total offers counter
-      await incrementOffersCounter()
-
-      // Send finalization message
-      const finalizationMessage = {
+      const rejectionMessage = {
         senderId: "system",
-        content: `🎉 Sale finalized! Product sold for ₹${offerPrice}. Listing has been removed from marketplace. Chat will be closed.`,
+        content: `❌ Offer of ₹${currentOfferPrice} was rejected`,
         timestamp: serverTimestamp(),
         type: "system",
         isOfferMessage: true,
       }
 
-      await addDoc(collection(db, "chats", chatId, "messages"), finalizationMessage)
-
-      // Update local state
-      setIsProductSold(true)
-      console.log("Local state updated - product marked as sold")
-
-      // Close chat after a delay
-      console.log("Setting timeout to close chat in 3 seconds...")
-      setTimeout(() => {
-        console.log("Timeout reached - closing chat")
-        if (onBackClick) {
-          onBackClick()
-        }
-      }, 3000)
+      await addDoc(collection(db, "chats", chatId, "messages"), rejectionMessage)
     } catch (error) {
-      console.error("Error finalizing sale:", error)
+      console.error("Error rejecting offer:", error)
     }
   }
 
   const incrementOffersCounter = async () => {
     try {
       const counterRef = doc(db, "counters", "offers")
-      await setDoc(
-        counterRef,
-        {
-          totalOffers: serverTimestamp(), // This will be handled by a cloud function or we'll use increment
-        },
-        { merge: true },
-      )
-
-      // Alternative approach: Use a transaction to increment
       const counterDoc = await getDoc(counterRef)
       if (counterDoc.exists()) {
         const currentCount = counterDoc.data().totalOffers || 0
@@ -632,40 +636,8 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     }
   }
 
-  const rejectOffer = async () => {
-    try {
-      const chatRef = doc(db, "chats", chatId)
-      await updateDoc(chatRef, {
-        offerPrice: null,
-        buyerAccepted: false,
-        sellerAccepted: false,
-        offerProposedBy: null,
-        offerProposedAt: null,
-      })
-
-      // Send rejection message
-      const rejectionMessage = {
-        senderId: "system",
-        content: `❌ Offer of ₹${offerPrice} was rejected`,
-        timestamp: serverTimestamp(),
-        type: "system",
-        isOfferMessage: true,
-      }
-
-      await addDoc(collection(db, "chats", chatId, "messages"), rejectionMessage)
-
-      // Reset local state
-      setOfferPrice("")
-      setBuyerAccepted(false)
-      setSellerAccepted(false)
-    } catch (error) {
-      console.error("Error rejecting offer:", error)
-    }
-  }
-
   const getOtherUserName = () => {
     if (!chatInfo || !currentUser) return "Unknown User"
-    // If we already have the names in chatInfo, use them
     if (currentUser.uid === chatInfo.buyerId && chatInfo.sellerName != null) {
       return chatInfo.sellerName
     } else if (currentUser.uid === chatInfo.sellerId && chatInfo.buyerName != null) {
@@ -688,7 +660,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         let buyerName = chatInfo.buyerName
         let sellerName = chatInfo.sellerName
 
-        // Fetch buyer name if missing
         if (!buyerName && chatInfo.buyerId) {
           const buyerDoc = await getDoc(doc(db, "users", chatInfo.buyerId))
           if (buyerDoc.exists()) {
@@ -699,7 +670,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           }
         }
 
-        // Fetch seller name if missing
         if (!sellerName && chatInfo.sellerId) {
           const sellerDoc = await getDoc(doc(db, "users", chatInfo.sellerId))
           if (sellerDoc.exists()) {
@@ -710,7 +680,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           }
         }
 
-        // Update chatInfo with the fetched names
         if (buyerName !== chatInfo.buyerName || sellerName !== chatInfo.sellerName) {
           setChatInfo((prev) => ({
             ...prev,
@@ -726,10 +695,11 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
     fetchUserNames()
   }, [chatInfo, currentUser])
 
+  const hasActiveOffer = (chatInfo?.offerPrice || offerPrice) && !isProductSold && !chatInfo?.productSold
+
   const otherUserName = getOtherUserName()
   const Id = getId()
   const avatarColor = getAvatarColor(otherUserName)
-  const hasActiveOffer = offerPrice && !isProductSold
 
   if (loading) {
     return (
@@ -786,17 +756,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
-          {/* Product Link Button */}
-          {productLink && (
-            <button
-              onClick={() => window.open(productLink, "_blank")}
-              className="px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-            >
-              View Product
-            </button>
-          )}
-
-          {/* Offer Finalization Button */}
           {!isProductSold && chatInfo && currentUser && (
             <button
               onClick={() => setShowOfferModal(true)}
@@ -833,7 +792,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         ) : (
           <div className="space-y-4">
             {messages.map((message) => {
-              // Handle system messages differently
               if (message.senderId === "system") {
                 return (
                   <div key={message.id} className="flex justify-center my-4">
@@ -856,10 +814,8 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                         : "bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
                     }`}
                   >
-                    {/* Optional text content */}
                     {message.content && message.content.trim() !== "" && <p className="text-sm">{message.content}</p>}
 
-                    {/* Images grid if present */}
                     {Array.isArray(message.images) && message.images.length > 0 && (
                       <div className="mt-2 grid grid-cols-2 gap-2">
                         {message.images.map((img, idx) => {
@@ -896,7 +852,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
       {/* Input Area */}
       <div className="p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Image Upload Button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
@@ -913,7 +868,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             </svg>
           </button>
 
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -923,7 +877,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             className="hidden"
           />
 
-          {/* Message Input */}
           <input
             type="text"
             value={input}
@@ -934,7 +887,6 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
             disabled={uploading}
           />
 
-          {/* Send Button */}
           <button
             onClick={handleSendMessage}
             disabled={uploading || (!input.trim() && images.length === 0)}
@@ -993,19 +945,32 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
         <div className="p-4 bg-green-50 dark:bg-green-900/20 border-t border-green-200 dark:border-green-800">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h4 className="font-semibold text-green-800 dark:text-green-200">Active Offer: ₹{offerPrice}</h4>
+              <h4 className="font-semibold text-green-800 dark:text-green-200">
+                Active Offer: ₹{chatInfo?.offerPrice || offerPrice}
+              </h4>
               <div className="flex items-center gap-4 mt-2 text-sm text-green-700 dark:text-green-300">
-                <span className={`flex items-center gap-1 ${buyerAccepted ? "text-green-600" : "text-gray-500"}`}>
-                  {buyerAccepted ? "✅" : "⏳"} Buyer {buyerAccepted ? "Accepted" : "Pending"}
+                <span
+                  className={`flex items-center gap-1 ${chatInfo?.buyerAccepted || buyerAccepted ? "text-green-600" : "text-gray-500"}`}
+                >
+                  {chatInfo?.buyerAccepted || buyerAccepted ? "✅" : "⏳"} Buyer{" "}
+                  {chatInfo?.buyerAccepted || buyerAccepted ? "Accepted" : "Pending"}
                 </span>
-                <span className={`flex items-center gap-1 ${sellerAccepted ? "text-green-600" : "text-gray-500"}`}>
-                  {sellerAccepted ? "✅" : "⏳"} Seller {sellerAccepted ? "Accepted" : "Pending"}
+                <span
+                  className={`flex items-center gap-1 ${chatInfo?.sellerAccepted || sellerAccepted ? "text-green-600" : "text-gray-500"}`}
+                >
+                  {chatInfo?.sellerAccepted || sellerAccepted ? "✅" : "⏳"} Seller{" "}
+                  {chatInfo?.sellerAccepted || sellerAccepted ? "Accepted" : "Pending"}
                 </span>
               </div>
+              {chatInfo?.offerProposedBy && (
+                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  Proposed by: {chatInfo.offerProposedBy === chatInfo.buyerId ? "Buyer" : "Seller"}
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">
-              {!buyerAccepted && currentUser?.uid === chatInfo?.buyerId && (
+              {!(chatInfo?.buyerAccepted || buyerAccepted) && currentUser?.uid === chatInfo?.buyerId && (
                 <button
                   onClick={acceptOffer}
                   disabled={isFinalizing}
@@ -1015,7 +980,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                 </button>
               )}
 
-              {!sellerAccepted && currentUser?.uid === chatInfo?.sellerId && (
+              {!(chatInfo?.sellerAccepted || sellerAccepted) && currentUser?.uid === chatInfo?.sellerId && (
                 <button
                   onClick={acceptOffer}
                   disabled={isFinalizing}
@@ -1025,7 +990,7 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
                 </button>
               )}
 
-              {hasActiveOffer && (
+              {hasActiveOffer && !isFinalizing && (
                 <button
                   onClick={rejectOffer}
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm"
@@ -1049,8 +1014,36 @@ const ChatRoom = ({ chatId, currentUser, onBackClick, productLink }) => {
           </div>
         </div>
       )}
+
+      {/* Confirmation Dialog for Removing Listing */}
+      {showRemoveListingDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Remove Listing?</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              The sale has been completed! Would you like to remove this listing from the marketplace entirely, or keep
+              it?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                onClick={() => handleRemoveListingConfirmation(false)}
+              >
+                Keep Listing
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                onClick={() => handleRemoveListingConfirmation(true)}
+              >
+                Remove Listing
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default ChatRoom
+

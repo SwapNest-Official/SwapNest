@@ -9,11 +9,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { User, Mail, Lock, GraduationCap, Shield, Star, Users, CheckCircle, AlertCircle, Sparkles } from "lucide-react"
-import { auth, db } from "../firebase/config.js"
-import { createUserWithEmailAndPassword, sendEmailVerification,fetchSignInMethodsForEmail,getAuth } from "firebase/auth"
+import { db } from "../firebase/config.js"
+import { createUserWithEmailAndPassword, sendEmailVerification, getAuth } from "firebase/auth"
 import { useNavigate } from "react-router-dom"
 import { Timestamp, doc, setDoc } from "firebase/firestore"
 import EmailVerification from "./email-verification"
+
 const SignupPage = () => {
   const [userCredentials, setUserCredentials] = useState({})
   const [error, setError] = useState("")
@@ -21,62 +22,47 @@ const SignupPage = () => {
   const [showVerification, setShowVerification] = useState(false)
   const [verificationSent, setVerificationSent] = useState(false)
   const navigate = useNavigate()
-  
-const auth = getAuth();
+
+  const authInstance = getAuth()
 
   function handleChange(e) {
     setUserCredentials({ ...userCredentials, [e.target.name]: e.target.value })
   }
-  
-/* const checkIfEmailExists = async (email) => {
-  try {
-    const cleanEmail = email.trim().toLowerCase(); // normalize
-    const methods = await fetchSignInMethodsForEmail(auth, cleanEmail);
-    console.log(methods);
-    return methods.length > 0; // true if registered
-  } catch (error) {
-    console.error("Error checking email:", error);
-    return false;
-  }
-};
-*/
-  async function sendVerificationCode() {
-  setLoading(true);
-  setError("");
 
-  try {
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
+  async function sendVerificationCode() {
+    setLoading(true)
+    setError("")
+
+    try {
+      const code = Math.floor(100000 + Math.random() * 900000).toString()
       sessionStorage.setItem("verificationCode", code)
       sessionStorage.setItem("verificationEmail", userCredentials.email)
 
-    const res = await fetch("https://swapnest-m4p9.onrender.com/send-otp", {  
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: userCredentials.email, code:code }),
-    });
+      const res = await fetch("https://swapnest-m4p9.onrender.com/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userCredentials.email, code: code }),
+      })
 
-    
-    if (!res.ok) {
-      throw new Error(`Server error: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`Server error: ${res.status}`)
+      }
+
+      const data = await res.json()
+
+      if (data.success) {
+        setVerificationSent(true)
+        setShowVerification(true)
+      } else {
+        setError(data.message || "Failed to send OTP")
+      }
+    } catch (error) {
+      console.error("OTP send error:", error)
+      setError("Failed to send verification code. Please try again.")
+    } finally {
+      setLoading(false)
     }
-
-    const data = await res.json();
-
-    if (data.success) {
-      setVerificationSent(true);
-      setShowVerification(true);
-
-    } else {
-      setError(data.message || "Failed to send OTP");
-    }
-  } catch (error) {
-    console.error("OTP send error:", error);
-    setError("Failed to send verification code. Please try again.");
-  } finally {
-    setLoading(false);
   }
-}
-
 
   async function handleSignup(e) {
     e.preventDefault()
@@ -91,19 +77,10 @@ const auth = getAuth();
       return
     }
 
-
     if (!userCredentials.email.endsWith("@pec.edu.in")) {
-  setError("Please Use Your College Email-ID")
-  return
-}
-
-/*
-  const exists = await checkIfEmailExists(userCredentials.email);
-  console.log(exists);
-if (exists) {
-  setError("This email is already registered");
-  return;
-}*/
+      setError("Please Use Your College Email-ID")
+      return
+    }
 
     await sendVerificationCode()
   }
@@ -112,17 +89,20 @@ if (exists) {
     setLoading(true)
     setError("")
 
-   
     try {
       const storedCode = sessionStorage.getItem("verificationCode")
       const storedEmail = sessionStorage.getItem("verificationEmail")
 
-      console.log(storedCode,storedEmail,enteredCode,userCredentials.email);
+      console.log(storedCode, storedEmail, enteredCode, userCredentials.email)
       if (enteredCode !== storedCode || userCredentials.email !== storedEmail) {
         throw new Error("Invalid verification code")
       }
 
-      const userCredential = await createUserWithEmailAndPassword(auth, userCredentials.email, userCredentials.password)
+      const userCredential = await createUserWithEmailAndPassword(
+        authInstance,
+        userCredentials.email,
+        userCredentials.password,
+      )
       const user = userCredential.user
 
       await sendEmailVerification(user)
@@ -299,6 +279,15 @@ if (exists) {
                     <Alert variant="destructive" className="border-red-200 bg-red-50">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription className="text-red-700">{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {loading && (
+                    <Alert className="border-blue-200 bg-blue-50">
+                      <Sparkles className="h-4 w-4 text-blue-600" />
+                      <AlertDescription className="text-blue-700">
+                        🚀 Our digital pigeons are flying to your inbox... This might take a moment!
+                      </AlertDescription>
                     </Alert>
                   )}
 
