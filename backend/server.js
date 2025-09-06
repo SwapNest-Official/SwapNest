@@ -125,7 +125,7 @@ app.post('/send-otp', async (req, res) => {
       html: otpemail,
     });
 
-    console.log(`✅ OTP sent to ${email}: ${code}`);
+  //  console.log(`✅ OTP sent to ${email}: ${code}`);
 
     res.json({ success: true, message: "OTP sent successfully" });
   } catch (err) {
