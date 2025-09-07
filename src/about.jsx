@@ -119,7 +119,7 @@ export default function AboutUs() {
                 <div className="w-full h-96 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl transform rotate-3 hover:rotate-0 transition-all duration-500"></div>
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl shadow-2xl transform -rotate-3 hover:rotate-0 transition-all duration-500"></div>
                <img
-    src="/src/assets/logo.jpg"
+    src="https://res.cloudinary.com/db8elhbqj/image/upload/v1757218211/hkfu4atp60fz82o9n8e4.jpg"
     alt="SwapNest"
     className="absolute inset-0 w-full h-full object-cover rounded-3xl shadow-2xl hover:scale-105 transition-all duration-500"
   />
