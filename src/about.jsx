@@ -37,7 +37,7 @@ export default function AboutUs() {
     e.preventDefault();
     setloading(true);
     try {
-      const response = await fetch("https://college-fair.onrender.com/send-query-email", {
+      const response = await fetch("https://swapnest-m4p9.onrender.com/send-query-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

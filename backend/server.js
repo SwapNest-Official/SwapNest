@@ -95,6 +95,43 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // app.use('/api/emails', emailRoutes);
 
 /* ---------------- OTP Route ---------------- */
+  const transporter = nodemailer.createTransport({
+      service: "gmail", // or custom SMTP
+      auth: {
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS, // App password for Gmail
+      },
+    });
+
+
+app.post("/send-query-email", async (req, res) => {
+  try {
+    const { name, email,subject, query } = req.body;
+
+    const mailOptions = {
+      from: process.env.MAIL_USER, // sender (your Gmail)
+      to: "anmolgupta1502@gmail.com", // receiver (you)
+      subject: `📩 New Query from ${name}`,
+      text: `
+You received a new query:
+
+Name: ${name}
+Email: ${email}
+Subject : ${subject}
+Message: ${query}
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.status(200).json({ success: true, message: "Query sent successfully!" });
+  } catch (error) {
+    console.error("Error sending email:", error);
+    res.status(500).json({ success: false, message: "Failed to send query", error });
+  }
+});
+
+
 app.post('/send-otp', async (req, res) => {
   const { email, code } = req.body;
   console.log("📩 HIT /send-otp route");
@@ -109,14 +146,6 @@ app.post('/send-otp', async (req, res) => {
 
     // Replace placeholder {{CODE}} in template with actual code
     otpemail = otpemail.replace('{{CODE}}', code);
-
-    const transporter = nodemailer.createTransport({
-      service: "gmail", // or custom SMTP
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS, // App password for Gmail
-      },
-    });
 
     await transporter.sendMail({
       from: `"SwapNest" <${process.env.MAIL_USER}>`,
