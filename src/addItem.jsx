@@ -1,6 +1,8 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { db, auth } from "../src/firebase/config"
-import { collection, addDoc, serverTimestamp,updateDoc, doc, increment} from "firebase/firestore"
+import { collection, addDoc, serverTimestamp, updateDoc, doc, increment } from "firebase/firestore"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,23 +10,23 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Upload, ImageIcon, X, Plus, Calendar, Gift, Tag, AlertCircle, MapPin } from "lucide-react"
+import { Upload, ImageIcon, X, Calendar, Gift, Tag, AlertCircle, MapPin } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "sonner";
-import Navbar from "./navbar";
-import { useTheme } from "./contexts/ThemeContext";
+import { toast } from "sonner"
+import Navbar from "./navbar"
+import { useTheme } from "./contexts/ThemeContext"
 
 export default function ListingPage() {
   const [listingType, setListingType] = useState("sell")
   const [images, setImages] = useState([null, null, null, null, null])
   const [customDetails, setCustomDetails] = useState([{ key: "", value: "" }])
-  const [loading, setLoading] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [loadedSections, setLoadedSections] = useState([]);
-  const [uploadingImages, setUploadingImages] = useState([false, false, false, false, false]);
-  const [successImages, setSuccessImages] = useState([false, false, false, false, false]);
-  const { isDarkMode } = useTheme();
-  
+  const [loading, setLoading] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+  const [loadedSections, setLoadedSections] = useState([])
+  const [uploadingImages, setUploadingImages] = useState([false, false, false, false, false])
+  const [successImages, setSuccessImages] = useState([false, false, false, false, false])
+  const { isDarkMode } = useTheme()
+
   // Base form data for all listing types
   const [formData, setFormData] = useState({
     title: "",
@@ -51,33 +53,32 @@ export default function ListingPage() {
   })
 
   useEffect(() => {
-    setIsVisible(true);
+    setIsVisible(true)
     // Staggered loading of sections
-    const sections = [0, 1, 2, 3, 4];
+    const sections = [0, 1, 2, 3, 4]
     sections.forEach((section, index) => {
       setTimeout(() => {
-        setLoadedSections(prev => [...prev, section]);
-      }, index * 200);
-    });
-  }, []);
+        setLoadedSections((prev) => [...prev, section])
+      }, index * 200)
+    })
+  }, [])
 
-   //console.log(formData);
+  //console.log(formData);
   // Add this helper function at the top of your component, after the useState declarations
   const RequiredLabel = ({ htmlFor, children }) => (
     <Label htmlFor={htmlFor} className="flex items-center gap-1 text-gray-900 dark:text-white">
       {children} <span className="text-red-500">*</span>
     </Label>
   )
-   console.log(formData);
+  console.log(formData)
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }))
-   
   }
 
   const fileUpload = async (event, index) => {
@@ -111,19 +112,18 @@ export default function ListingPage() {
       newImageUrls[index] = finalData.url
 
       setImages(newImageUrls)
-      
+
       // Show success animation briefly
       const newSuccessImages = [...successImages]
       newSuccessImages[index] = true
       setSuccessImages(newSuccessImages)
-      
+
       // Hide success animation after 2 seconds
       setTimeout(() => {
         const resetSuccessImages = [...successImages]
         resetSuccessImages[index] = false
         setSuccessImages(resetSuccessImages)
       }, 2000)
-      
     } catch (error) {
       console.error("Error uploading image:", error)
       // Show error toast or alert
@@ -173,52 +173,64 @@ export default function ListingPage() {
   // Check if all required fields are completed
   const isFormComplete = () => {
     // Basic Info validation
-    if (!formData.title.trim() || !formData.category || !formData.description.trim() || !formData.college.trim() ||
-        !formData.availableFrom || !formData.availableTo) {
+    if (
+      !formData.title.trim() ||
+      !formData.category ||
+      !formData.description.trim() ||
+      !formData.college.trim() ||
+      !formData.availableFrom ||
+      !formData.availableTo
+    ) {
       return false
     }
-    
+
     // Details validation
     if (!formData.condition || !formData.location.trim() || !formData.tags.trim() || !formData.contactPreference) {
       return false
     }
-    
+
     // Images validation
     if (images.filter(Boolean).length === 0) {
       return false
     }
-    
+
     // Listing type specific validation
     if (listingType === "sell") {
       if (!formData.price || formData.price <= 0) {
         return false
       }
     }
-    
+
     if (listingType === "rent") {
-      if (!formData.rentAmount || formData.rentAmount <= 0 || !formData.rentPeriod || 
-          !formData.securityDeposit || formData.securityDeposit <= 0 || !formData.damagePolicy.trim()) {
+      if (
+        !formData.rentAmount ||
+        formData.rentAmount <= 0 ||
+        !formData.rentPeriod ||
+        !formData.securityDeposit ||
+        formData.securityDeposit <= 0 ||
+        !formData.damagePolicy.trim()
+      ) {
         return false
       }
     }
-    
+
     if (listingType === "donate") {
       if (!formData.donationReason.trim() || !formData.preferredRecipient || !formData.pickupInstructions.trim()) {
         return false
       }
     }
-    
+
     return true
   }
 
   // Handle form submission
-//  console.log(images[0]);
+  //  console.log(images[0]);
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     // Comprehensive validation for all required fields
     const validationErrors = []
-    
+
     // Basic Info validation
     if (!formData.title.trim()) {
       validationErrors.push("Title is required")
@@ -238,14 +250,14 @@ export default function ListingPage() {
     if (!formData.availableTo) {
       validationErrors.push("Available until date is required")
     }
-    
+
     // Validate dates make sense
     if (formData.availableFrom && formData.availableTo) {
       const fromDate = new Date(formData.availableFrom)
       const toDate = new Date(formData.availableTo)
       const today = new Date()
       today.setHours(0, 0, 0, 0)
-      
+
       if (fromDate < today) {
         validationErrors.push("Available from date cannot be in the past")
       }
@@ -253,7 +265,7 @@ export default function ListingPage() {
         validationErrors.push("Available until date must be after available from date")
       }
     }
-    
+
     // Details validation
     if (!formData.condition) {
       validationErrors.push("Condition is required")
@@ -267,20 +279,20 @@ export default function ListingPage() {
     if (!formData.contactPreference) {
       validationErrors.push("Contact preference is required")
     }
-    
+
     // Images validation
     const uploadedImages = images.filter(Boolean)
     if (uploadedImages.length === 0) {
       validationErrors.push("At least one image is required")
     }
-    
+
     // Listing type specific validation
     if (listingType === "sell") {
       if (!formData.price || formData.price <= 0) {
         validationErrors.push("Valid price is required for selling")
       }
     }
-    
+
     if (listingType === "rent") {
       if (!formData.rentAmount || formData.rentAmount <= 0) {
         validationErrors.push("Valid rent amount is required")
@@ -295,7 +307,7 @@ export default function ListingPage() {
         validationErrors.push("Damage policy is required")
       }
     }
-    
+
     if (listingType === "donate") {
       if (!formData.donationReason.trim()) {
         validationErrors.push("Reason for donation is required")
@@ -307,14 +319,14 @@ export default function ListingPage() {
         validationErrors.push("Pickup instructions are required")
       }
     }
-    
+
     // Show all validation errors if any
     if (validationErrors.length > 0) {
       alert("Please fix the following errors:\n\n" + validationErrors.join("\n"))
       return
     }
-    
-    setLoading(true);
+
+    setLoading(true)
     // Convert customDetails array into a map
     const detailsMap = customDetails.reduce((acc, detail) => {
       if (detail.key && detail.value) {
@@ -322,7 +334,7 @@ export default function ListingPage() {
       }
       return acc
     }, {})
-  
+
     try {
       await addDoc(collection(db, "items"), {
         ...formData,
@@ -336,37 +348,40 @@ export default function ListingPage() {
         userId: auth.currentUser.uid,
       })
 
-      alert("Your listing has been created successfully!");
-      const userRef = doc(db, "users", auth.currentUser.uid);
-    await updateDoc(userRef, {
-      itemsSold: increment(1),
-    });
+      alert("Your listing has been created successfully!")
+      const userRef = doc(db, "users", auth.currentUser.uid)
+      await updateDoc(userRef, {
+        itemsSold: increment(1),
+      })
     } catch (error) {
-    console.log(error);
-    alert("Failed to create listing. Please try again.");
-    
-    } finally{
-      setLoading(false);
+      console.log(error)
+      alert("Failed to create listing. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-500`}>
+    <div
+      className={`min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-all duration-500`}
+    >
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className={`text-center mb-12 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            List Your Item
-          </h1>
+        <div
+          className={`text-center mb-12 transition-all duration-1000 ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">List Your Item</h1>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Sell, rent, or donate items to your campus community. Reach thousands of students looking for great deals!
           </p>
         </div>
 
         {/* Listing Type Selection */}
-        <div className={`mb-8 transition-all duration-1000 delay-200 ${loadedSections.includes(0) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div
+          className={`mb-8 transition-all duration-1000 delay-200 ${loadedSections.includes(0) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+        >
           <Card className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-lg">
             <CardHeader>
               <CardTitle className="text-gray-900 dark:text-white">Choose Listing Type</CardTitle>
@@ -413,7 +428,9 @@ export default function ListingPage() {
         </div>
 
         {/* Main Form */}
-        <div className={`transition-all duration-1000 delay-400 ${loadedSections.includes(1) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        <div
+          className={`transition-all duration-1000 delay-400 ${loadedSections.includes(1) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+        >
           <Card className="bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 shadow-lg">
             <CardHeader>
               <CardTitle className="text-gray-900 dark:text-white">Item Details</CardTitle>
@@ -424,10 +441,30 @@ export default function ListingPage() {
             <CardContent className="space-y-6">
               <Tabs defaultValue="basic" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-gray-700">
-                  <TabsTrigger value="basic" className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">Basic Info</TabsTrigger>
-                  <TabsTrigger value="details" className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">Details</TabsTrigger>
-                  <TabsTrigger value="images" className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">Images</TabsTrigger>
-                  <TabsTrigger value="pricing" className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800">Pricing</TabsTrigger>
+                  <TabsTrigger
+                    value="basic"
+                    className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800"
+                  >
+                    Basic Info
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="details"
+                    className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800"
+                  >
+                    Details
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="images"
+                    className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800"
+                  >
+                    Images
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="pricing"
+                    className="text-gray-900 dark:text-white data-[state=active]:bg-white dark:data-[state=active]:bg-gray-800"
+                  >
+                    Pricing
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Basic Info Tab */}
@@ -446,7 +483,10 @@ export default function ListingPage() {
                     </div>
                     <div className="space-y-2">
                       <RequiredLabel htmlFor="category">Category</RequiredLabel>
-                      <Select value={formData.category} onValueChange={(value) => handleSelectChange("category", value)}>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) => handleSelectChange("category", value)}
+                      >
                         <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -461,7 +501,7 @@ export default function ListingPage() {
                       </Select>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <RequiredLabel htmlFor="description">Description</RequiredLabel>
                     <Textarea
@@ -474,19 +514,20 @@ export default function ListingPage() {
                       className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <RequiredLabel htmlFor="college">College Name</RequiredLabel>
-                    <Input
-                      id="college"
-                      name="college"
-                      value={formData.college}
-                      onChange={handleChange}
-                      placeholder="e.g. Delhi University"
-                      className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                    />
+                    <Select value={formData.college} onValueChange={(value) => handleSelectChange("college", value)}>
+                      <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
+                        <SelectValue placeholder="Select your college" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Chitkara University">Chitkara University</SelectItem>
+                        <SelectItem value="Punjab Engineering College">Punjab Engineering College</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <RequiredLabel htmlFor="availableFrom">Available From</RequiredLabel>
@@ -518,7 +559,10 @@ export default function ListingPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <RequiredLabel htmlFor="condition">Condition</RequiredLabel>
-                      <Select value={formData.condition} onValueChange={(value) => handleSelectChange("condition", value)}>
+                      <Select
+                        value={formData.condition}
+                        onValueChange={(value) => handleSelectChange("condition", value)}
+                      >
                         <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                           <SelectValue placeholder="Select condition" />
                         </SelectTrigger>
@@ -531,21 +575,22 @@ export default function ListingPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                                      <div className="space-y-2">
-                    <RequiredLabel htmlFor="location">Location</RequiredLabel>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="location"
-                        name="location"
-                        value={formData.location}
-                        onChange={handleChange}
-                        placeholder="Enter pickup location"
-                        className="pl-10 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                      />
+                    <div className="space-y-2">
+                      <RequiredLabel htmlFor="location">Location</RequiredLabel>
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          id="location"
+                          name="location"
+                          value={formData.location}
+                          onChange={handleChange}
+                          placeholder="Enter pickup location"
+                          className="pl-10 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                        />
+                      </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <RequiredLabel htmlFor="tags">Tags</RequiredLabel>
                     <Input
@@ -557,10 +602,13 @@ export default function ListingPage() {
                       className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <RequiredLabel htmlFor="contactPreference">Contact Preference</RequiredLabel>
-                    <Select value={formData.contactPreference} onValueChange={(value) => handleSelectChange("contactPreference", value)}>
+                    <Select
+                      value={formData.contactPreference}
+                      onValueChange={(value) => handleSelectChange("contactPreference", value)}
+                    >
                       <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                         <SelectValue placeholder="Select contact preference" />
                       </SelectTrigger>
@@ -572,7 +620,6 @@ export default function ListingPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  </div>
                 </TabsContent>
 
                 {/* Images Tab */}
@@ -582,7 +629,7 @@ export default function ListingPage() {
                       <RequiredLabel htmlFor="images">Product Images</RequiredLabel>
                       <span className="text-sm text-gray-500 dark:text-gray-400">(At least 1 required)</span>
                     </div>
-                    
+
                     {/* Validation message */}
                     {images.filter(Boolean).length === 0 && (
                       <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
@@ -590,32 +637,34 @@ export default function ListingPage() {
                         <span>Please upload at least one image to continue</span>
                       </div>
                     )}
-                    
+
                     {/* Success message when images are uploaded */}
                     {images.filter(Boolean).length > 0 && (
                       <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
-                        <span>✓ {images.filter(Boolean).length} image{images.filter(Boolean).length > 1 ? 's' : ''} uploaded</span>
+                        <span>
+                          ✓ {images.filter(Boolean).length} image{images.filter(Boolean).length > 1 ? "s" : ""} uploaded
+                        </span>
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     {images.map((image, index) => (
                       <div key={index} className="relative">
-                                                  <label
-                            htmlFor={`image-${index}`}
-                            className={`block w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-300 ${
-                              uploadingImages[index]
-                                ? "border-blue-300 bg-blue-50 dark:bg-blue-900/20 scale-95"
-                                : successImages[index]
-                                  ? "border-green-400 bg-green-100 dark:bg-green-900/30 scale-105 shadow-lg"
-                                  : image
-                                    ? "border-green-300 bg-green-50 dark:bg-green-900/20 hover:scale-105 hover:shadow-md"
-                                    : index === 0 
-                                      ? "border-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:scale-105 hover:shadow-md" 
-                                      : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:scale-105 hover:shadow-md"
-                            }`}
-                          >
+                        <label
+                          htmlFor={`image-${index}`}
+                          className={`block w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-300 ${
+                            uploadingImages[index]
+                              ? "border-blue-300 bg-blue-50 dark:bg-blue-900/20 scale-95"
+                              : successImages[index]
+                                ? "border-green-400 bg-green-100 dark:bg-green-900/30 scale-105 shadow-lg"
+                                : image
+                                  ? "border-green-300 bg-green-50 dark:bg-green-900/20 hover:scale-105 hover:shadow-md"
+                                  : index === 0
+                                    ? "border-amber-300 bg-amber-50 dark:bg-amber-900/20 hover:scale-105 hover:shadow-md"
+                                    : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:scale-105 hover:shadow-md"
+                          }`}
+                        >
                           {uploadingImages[index] ? (
                             <div className="flex flex-col items-center justify-center h-full text-blue-600 dark:text-blue-400">
                               <div className="relative mb-3">
@@ -631,8 +680,18 @@ export default function ListingPage() {
                             <div className="flex flex-col items-center justify-center h-full text-green-600 dark:text-green-400">
                               <div className="relative mb-3">
                                 <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
-                                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  <svg
+                                    className="w-5 h-5 text-white"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 13l4 4L19 7"
+                                    />
                                   </svg>
                                 </div>
                               </div>
@@ -641,16 +700,16 @@ export default function ListingPage() {
                           ) : image ? (
                             <div className="relative w-full h-full animate-in fade-in duration-300">
                               <img
-                                src={image}
+                                src={image || "/placeholder.svg"}
                                 alt={`Preview ${index + 1}`}
                                 className="w-full h-full object-cover rounded-lg"
                               />
                               <button
                                 type="button"
                                 onClick={() => {
-                                  const newImages = [...images];
-                                  newImages[index] = null;
-                                  setImages(newImages);
+                                  const newImages = [...images]
+                                  newImages[index] = null
+                                  setImages(newImages)
                                 }}
                                 className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
                               >
@@ -660,9 +719,7 @@ export default function ListingPage() {
                           ) : (
                             <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-gray-500">
                               <ImageIcon className="h-8 w-8 mb-2" />
-                              <span className="text-xs">
-                                {index === 0 ? "Required" : "Optional"}
-                              </span>
+                              <span className="text-xs">{index === 0 ? "Required" : "Optional"}</span>
                             </div>
                           )}
                         </label>
@@ -713,7 +770,10 @@ export default function ListingPage() {
                         </div>
                         <div className="space-y-2">
                           <RequiredLabel htmlFor="rentPeriod">Rent Period</RequiredLabel>
-                          <Select value={formData.rentPeriod} onValueChange={(value) => handleSelectChange("rentPeriod", value)}>
+                          <Select
+                            value={formData.rentPeriod}
+                            onValueChange={(value) => handleSelectChange("rentPeriod", value)}
+                          >
                             <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue />
                             </SelectTrigger>
@@ -725,7 +785,7 @@ export default function ListingPage() {
                           </Select>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <RequiredLabel htmlFor="securityDeposit">Security Deposit (₹)</RequiredLabel>
@@ -769,11 +829,14 @@ export default function ListingPage() {
                           className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                         />
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <RequiredLabel htmlFor="preferredRecipient">Preferred Recipient</RequiredLabel>
-                          <Select value={formData.preferredRecipient} onValueChange={(value) => handleSelectChange("preferredRecipient", value)}>
+                          <Select
+                            value={formData.preferredRecipient}
+                            onValueChange={(value) => handleSelectChange("preferredRecipient", value)}
+                          >
                             <SelectTrigger className="bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white">
                               <SelectValue placeholder="Select preferred recipient" />
                             </SelectTrigger>
@@ -806,15 +869,17 @@ export default function ListingPage() {
           </Card>
         </div>
 
-                {/* Submit Button */}
-        <div className={`mt-8 text-center transition-all duration-1000 delay-600 ${loadedSections.includes(4) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+        {/* Submit Button */}
+        <div
+          className={`mt-8 text-center transition-all duration-1000 delay-600 ${loadedSections.includes(4) ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"}`}
+        >
           <Button
             onClick={handleSubmit}
             disabled={loading || !isFormComplete()}
             className={`px-8 py-4 font-semibold rounded-xl shadow-lg transition-all transform text-lg ${
               !isFormComplete()
-                ? 'bg-gray-400 cursor-not-allowed transform-none'
-                : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl hover:-translate-y-1'
+                ? "bg-gray-400 cursor-not-allowed transform-none"
+                : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:shadow-xl hover:-translate-y-1"
             } text-white`}
           >
             {loading ? (
@@ -834,7 +899,7 @@ export default function ListingPage() {
               </div>
             )}
           </Button>
-          
+
           {/* Help text */}
           {!isFormComplete() && (
             <div className="mt-3 text-sm text-amber-600 dark:text-amber-400 space-y-1">
@@ -851,13 +916,23 @@ export default function ListingPage() {
                 {!formData.tags.trim() && <li>• Tags are required</li>}
                 {!formData.contactPreference && <li>• Contact preference is required</li>}
                 {images.filter(Boolean).length === 0 && <li>• At least one image is required</li>}
-                {listingType === "sell" && (!formData.price || formData.price <= 0) && <li>• Valid price is required for selling</li>}
-                {listingType === "rent" && (!formData.rentAmount || formData.rentAmount <= 0) && <li>• Valid rent amount is required</li>}
-                {listingType === "rent" && (!formData.securityDeposit || formData.securityDeposit <= 0) && <li>• Valid security deposit is required</li>}
+                {listingType === "sell" && (!formData.price || formData.price <= 0) && (
+                  <li>• Valid price is required for selling</li>
+                )}
+                {listingType === "rent" && (!formData.rentAmount || formData.rentAmount <= 0) && (
+                  <li>• Valid rent amount is required</li>
+                )}
+                {listingType === "rent" && (!formData.securityDeposit || formData.securityDeposit <= 0) && (
+                  <li>• Valid security deposit is required</li>
+                )}
                 {listingType === "rent" && !formData.damagePolicy.trim() && <li>• Damage policy is required</li>}
-                {listingType === "donate" && !formData.donationReason.trim() && <li>• Reason for donation is required</li>}
+                {listingType === "donate" && !formData.donationReason.trim() && (
+                  <li>• Reason for donation is required</li>
+                )}
                 {listingType === "donate" && !formData.preferredRecipient && <li>• Preferred recipient is required</li>}
-                {listingType === "donate" && !formData.pickupInstructions.trim() && <li>• Pickup instructions are required</li>}
+                {listingType === "donate" && !formData.pickupInstructions.trim() && (
+                  <li>• Pickup instructions are required</li>
+                )}
               </ul>
             </div>
           )}
